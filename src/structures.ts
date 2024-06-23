@@ -9,8 +9,21 @@ import { LanedType, SlideType, UnlanedType } from "./types"
 // non null duration, if the type is a Tap, the note is to be read as though it were
 // a tap
 
-export class Note {
+export class MaiChart {
+    noteCollections: NoteCollection[]
+    slides: Slide[]
+    timingMarkers: TimingMarker[]
+}
+
+export class TimingMarker {
+
+}
+
+export class NoteCollection extends Array<Note> {
     time: Time
+}
+
+export class Note {
 }
 
 export class UnlanedNote extends Note {
@@ -64,7 +77,7 @@ export class Location {
     fragment: Area
 
     constructor(index: number, fragment: Area = Area.Tap) {
-        
+
     }
 }
 
