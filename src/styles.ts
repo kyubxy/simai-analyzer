@@ -1,6 +1,7 @@
 export enum TapStyle {
     Circle,
-    Star,
+    Star, // rotates
+    StarStationary
 }
 
 export enum StarAnimation {

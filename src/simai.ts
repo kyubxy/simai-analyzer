@@ -1,7 +1,7 @@
 import { parse } from "../lib/parser";
 import { MaiChart } from "./maiChart";
-import { genAbsyn } from "./serialization/absyn";
-import { validate } from "./serialization/semant";
+import { genAbsyn } from "./deserialization/absyn";
+import { validate } from "./deserialization/semant";
 
 export class SimaiFile {
 

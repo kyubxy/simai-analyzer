@@ -29,17 +29,17 @@ noteCol "note collection"
 	= n:note ns:(("/"/"`") ns:note {return ns})* {return [n, ...ns]}
 
 note
-	= s:slide {return s}
-    / th:touchHold {return th}
-    / tc:touch {return tc}
+    = th:touchHold {return th}
     / h:hold {return h}
+	/ s:slide {return s}
+    / tc:touch {return tc}
     / t:tap {return t}
     
 tap 
 	= loc:buttonLoc star:$"$"|..2| brk:$"b"? ex:$"x"? { return {label: "tap",loc:loc, brk:brk, ex:ex, star:star}}
     
 hold
-	= loc:buttonLoc brk:$"b"? "h"? ex:$"x"? dur:lenHold {return{label:"hold",loc:loc,brk:brk,ex:ex,dur:dur}} 
+	= loc:buttonLoc brk:$"b"? "h" ex:$"x"? dur:lenHold {return{label:"hold",loc:loc,brk:brk,ex:ex,dur:dur}} 
 
 // the entire slide ie. 5^5[4:5]
 slide 
@@ -57,16 +57,16 @@ slide
 // eg. ^4[4:5]b or V35[3##3##3] 
 slidePartial
 	= segments:(sps:slidePartialSecond len:lenSlide brk:$"b"? // although we "allow" adding breaks to individual slide segments, in reality the break effect will be applied to all segments in the path 
-    	{return{info: "variableLen", type: sps.type, verts:sps.verts, len:len, brk:brk}}
-      )+ {return segments}
+    	{return{label: "slideBody", info: "variableLen", type: sps.type, verts:sps.verts, len:len, brk:brk}}
+      )+ {return {label: "slidePath", info: "variableLen", segments:segments}}
     / segments:slidePartialSecond+ len:lenSlide brk:$"b"?
-    	{return {info: "constantLen", segments:segments, len:len, brk:brk}}
+    	{return {label: "slidePath", info: "constantLen", segments:segments, len:len, brk:brk}}
         
   
 // eg. ^4 or V35
 slidePartialSecond
-	= type:slideType v1:buttonLoc {return {type:type, verts:[v1]}}
-    / "V" v1:buttonLoc v2:buttonLoc {return {type:"V", verts:[v1,v2]}}
+	= type:slideType v1:buttonLoc {return {label: "slideBody", info: "constantLen", type:type, verts:[v1]}}
+    / "V" v1:buttonLoc v2:buttonLoc {return {label: "slideBody", info: "constantLen", type:"V", verts:[v1,v2]}}
     
 touch
 	= l:touchLoc f:"f"? {return {label:"touch", loc: l, firework: f}}
@@ -100,10 +100,10 @@ ratio
 	= d:integer ":" n:integer {return {div: d, num: n}}
     
 touchLoc
-	= f:[A-E] i:[1-8] {return {pos: i, frag: f}}
+	= f:[A-E] i:[1-8] {return {pos: i, frag: f}} / "C" {return {pos: 1, frag:"C"}}
     
 buttonLoc
-	= l:[1-8] {return l}
+	= l:[1-8] {return {pos: l, frag:"tap"}}
     
 number 
 	= d:decimal / i:integer{return i}

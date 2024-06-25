@@ -1,5 +1,8 @@
-import { Time } from "./structures";
+export function unquantise(divisions: number, num: number, bpm: number): number {
 
-export function inSeconds(time: Time): number {
-    throw new Error
+}
+
+// returns the number of divisions
+export function quantise(sec: number, bpm: number, divisions?: number): number {
+
 }

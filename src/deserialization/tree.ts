@@ -1,47 +1,47 @@
-export interface Tree {
+export interface TreeNode {
     label: string
     info: string
 }
 
-export interface Chart extends Tree {
+export interface Chart extends TreeNode {
     chart: Elem[]
 }
 
-export interface Elem extends Tree {
+export interface Elem extends TreeNode {
     bpm: number
-    len: Len
-    noteCol: Tree[]
+    len: LenDef
+    noteCol: TreeNode[]
 }
 
-export interface Len extends Tree {
+export interface LenDef extends TreeNode {
     info: string
     div: number
     sec: number
 }
 
-export interface TreeNote extends Tree { }
+export interface TreeNote extends TreeNode { }
 
 export interface Tap extends TreeNote {
-    loc: string
+    loc: Loc
     brk: string
     ex: string
     star: string
 }
 
 export interface Hold extends TreeNote {
-    loc: string
+    loc: Loc
     brk: string
     ex: string
     dur: LenHold
 }
 
 export interface Slide extends TreeNote {
-    loc: string
+    loc: Loc
     style: string
     slidePaths: SlidePath[]
 }
 
-export interface SlidePath extends Tree { }
+export interface SlidePath extends TreeNode { }
 
 export interface ConstantLenSP extends SlidePath {
     segments: SlideSegmentConst[]
@@ -53,7 +53,7 @@ export interface VariableLenSP extends SlidePath {
     segments: SlideSegmentVar[]
 }
 
-export interface SlideSegment extends Tree {}
+export interface SlideSegment extends TreeNode {}
 
 export interface SlideSegmentConst extends SlideSegment {
     type: string
@@ -67,20 +67,37 @@ export interface SlideSegmentVar extends SlideSegment {
     brk: string
 }
 
-export interface LenSlide extends Tree {
+export interface LenSlide extends TreeNode {
     ratio: Ratio
     bpm: number
     len: number
     delay: number
 }
 
-export interface LenHold extends Tree {
+export interface LenHold extends TreeNode {
     ratio: Ratio
     bpm: number
     delay: number
+}
+
+export interface Touch extends TreeNode {
+    loc: Loc
+    firework: string
+}
+
+export interface TouchHold extends TreeNode {
+    loc: Loc
+    firework: string
+    len: LenHold
 }
 
 export interface Ratio {
     div: number
     num: number
 }
+
+export interface Loc {
+    pos: string
+    frag: string
+}
+

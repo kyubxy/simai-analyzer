@@ -9,51 +9,65 @@ import { LanedType, SlideType, UnlanedType } from "./types"
 // non null duration, if the type is a Tap, the note is to be read as though it were
 // a tap
 
-export class MaiChart {
-    noteCollections: NoteCollection[]
-    slides: Slide[]
-    timingMarkers: TimingMarker[]
-}
+// a note on time: eventually we'll want to move to using proper values to improve serialisation
+// and not just seconds. for the time being we'll just stick with using seconds and
+// quantise the second values 
 
 export class TimingMarker {
+    constructor(public bpm: number, public division: number) {
 
+    }
+
+    getSecondsInMeasure(): number {
+        throw new Error()
+    }
 }
 
 export class NoteCollection extends Array<Note> {
-    time: Time
+    time: number
 }
 
 export class Note {
 }
 
 export class UnlanedNote extends Note {
-    type: UnlanedType
-    location: Location
-    decorators: TouchDecorator
-    duration: Time
+    constructor( 
+        public type: UnlanedType,
+        public location: Location,
+        public decorators: TouchDecorator,
+        public duration: number
+    ) { 
+        super()
+    }
 }
 
 export class LanedNote extends Note {
-    type: LanedType
-    style: TapStyle
-    decorators: NoteDecorator
-    location: Location
-    duration: Time
-    slide?: Slide // this is nothing more than a pointer to a slide object in
-                    // another buffer. otherwise, the two types have nothing in common
+    constructor(
+        public type: LanedType,
+        public style: TapStyle,
+        public decorators: NoteDecorator,
+        public location: Location,
+        public duration: number,
+
+        // this is nothing more than a pointer to a slide object in another buffer
+        public slide?: Slide 
+                        
+    ) { 
+        super()
+    }
 }
 
 export class Slide {
-    time: Time
-    delay: Time
+    time: number
+    delay: number
     decorators: NoteDecorator
-    paths: SlidePath
+    paths: SlidePath[]
 }
 
 export class SlidePath {
     starAnimation: StarAnimation
     slideSegments: SlideSegment[]
-    decorators: NoteDecorator
+    //decorators: NoteDecorator
 
     isEachSlide(): boolean {
         return this.slideSegments.length > 1
@@ -62,23 +76,15 @@ export class SlidePath {
 
 export class SlideSegment {
     type: SlideType
-    duration: Time
+    duration: number
     vertices: Location[]
 }
 
-export class Time {
-    getSeconds(): number {
-        throw new Error()
-    }
-}
-
 export class Location {
-    index: number // location indices start from 0
-    fragment: Area
-
-    constructor(index: number, fragment: Area = Area.Tap) {
-
-    }
+    constructor(
+        public index: number,  // location indices start from 0
+        public fragment: Area = Area.Tap
+    ) { }
 }
 
 export enum Area {
