@@ -1,3 +1,4 @@
+import { unquantise } from "../helpers";
 import { MaiChart } from "../maiChart";
 import * as Absyn from "../structures";
 import { NoteDecorator, TapStyle, TouchDecorator } from "../styles";
@@ -62,13 +63,7 @@ class AbsynGen {
 
         // parse length divider
         if (elem.len !== null) {
-            if (this.bpm === undefined) {
-                throw new AbsynError("No BPM was previously defined")
-            }
-            if (this.bpm <= 0) {
-                throw new AbsynError("Malformed value, BPM must be positive integer") // TODO: double check whether 0 BPM is valid
-            }
-
+            this.validateBpm(this.bpm)
             timingIsDirty = true
         }
 
@@ -138,7 +133,20 @@ class AbsynGen {
     }
 
     private parseHold(hold: Tree.Hold): Absyn.LanedNote {
-        throw new Error()
+        // decorators
+        let decorator = NoteDecorator.None
+        if (hold.ex === "x") 
+            decorator |= NoteDecorator.Ex
+        if (hold.brk === "b") 
+            decorator |= NoteDecorator.Break
+
+        // location
+        const loc: Absyn.Location = new Absyn.Location(+hold.loc.pos - 1)
+
+        // duration
+        const duration = this.parseLenHold(hold.dur)
+
+        return new Absyn.LanedNote(LanedType.Hold, TapStyle.Circle, decorator, loc, duration, null)
     }
 
     private parseTouch(touch: Tree.Touch): Absyn.UnlanedNote {
@@ -154,13 +162,51 @@ class AbsynGen {
     }
 
     private parseTouchHold(touchHold: Tree.TouchHold): Absyn.UnlanedNote {
-        throw new Error()
+        // decorators
+        let decorator = TouchDecorator.None
+        if (touchHold.firework === "f") 
+            decorator |= TouchDecorator.Hanabi
+
+        // location
+        const loc: Absyn.Location = new Absyn.Location(+touchHold.loc.pos - 1, parseFrag(touchHold.loc.frag))
+
+        // duration
+        const duration = this.parseLenHold(touchHold.len)
+
+        return new Absyn.UnlanedNote(UnlanedType.TouchHold, loc, decorator, duration)
     }
 
     private parseSlide(slide: Tree.Slide): Absyn.Slide {
         throw new Error()
     }
+
+    // retrieves the total time of the hold duration
+    // in seconds
+    private parseLenHold(duration: Tree.LenHold): number {
+        let localBpm: number;
+        switch(duration.info) {
+            case "bpmratio":
+                localBpm = this.validateBpm(duration.bpm) // collapse onto the next case
+            case "ratio":
+                localBpm ??= this.validateBpm(this.bpm)
+                return unquantise(duration.ratio.div, duration.ratio.num, localBpm)
+            case "delay":
+                return duration.delay
+        }
+        throw new AbsynError("Invalid lenHold type " + duration.info)
+    }
+
+    private validateBpm(bpm?: number): number {
+        if (this.bpm === undefined) {
+            throw new AbsynError("No BPM was previously defined")
+        }
+        if (this.bpm <= 0) {
+            throw new AbsynError("Malformed value, BPM must be positive integer") // TODO: double check whether 0 BPM is valid
+        }
+        return bpm!
+    }
 }
+
 
 function parseFrag(f: string): Absyn.Area {
     switch (f) {

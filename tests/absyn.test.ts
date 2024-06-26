@@ -2,7 +2,7 @@ import { genAbsyn } from "../src/deserialization/absyn"
 import { parse } from "../lib/parser"
 import { MaiChart } from "../src/maiChart"
 import { Area, LanedNote, TimingMarker, UnlanedNote } from "../src/structures"
-import { NoteDecorator, TouchDecorator } from "../src/styles"
+import { NoteDecorator, TapStyle, TouchDecorator } from "../src/styles"
 import { unquantise } from "../src/helpers"
 import { LanedType, SlideType, UnlanedType } from "../src/types"
 
@@ -84,21 +84,28 @@ describe("AbsynGen - basic usage", () => {
         expect(ast.noteCollections.length).toBe(1)
 
         const hold = (<LanedNote>ast.noteCollections[0][0])
-        expect(hold.type).toBe(LanedType.Tap)
+        expect(hold.type).toBe(LanedType.Hold)
         expect(hold.location.fragment).toBe(Area.Tap)
         expect(hold.location.index).toBe(3)
         expect(hold.duration).toBeCloseTo(unquantise(4, 3, 160))
+        expect(hold.decorators).toBe(NoteDecorator.None)
+        expect(hold.slide).toBeNull()
+        expect(hold.style).toBe(TapStyle.Circle)
     })
 
     it("can parse a hold note in the form xh[bpm#a:b]", () => {
         const ast = getAst("(160){4}4h[200#4:3],")
         expect(ast.noteCollections.length).toBe(1)
-        expect((<LanedNote>ast.noteCollections[0][0]).type).toBe(LanedType.Tap)
+        expect((<LanedNote>ast.noteCollections[0][0]).type).toBe(LanedType.Hold)
 
         const hold = (<LanedNote>ast.noteCollections[0][0])
+        expect(hold.type).toBe(LanedType.Hold)
         expect(hold.location.fragment).toBe(Area.Tap)
         expect(hold.location.index).toBe(3)
         expect(hold.duration).toBeCloseTo(unquantise(4, 3, 200))
+        expect(hold.decorators).toBe(NoteDecorator.None)
+        expect(hold.slide).toBeNull()
+        expect(hold.style).toBe(TapStyle.Circle)
     })
 
     it("can parse a hold note in the form xh[#secs]", () => {
@@ -110,12 +117,15 @@ describe("AbsynGen - basic usage", () => {
         expect(hold.location.fragment).toBe(Area.Tap)
         expect(hold.location.index).toBe(3)
         expect(hold.duration).toBeCloseTo(9)
+        expect(hold.decorators).toBe(NoteDecorator.None)
+        expect(hold.slide).toBeNull()
+        expect(hold.style).toBe(TapStyle.Circle)
     })
 
     it("can parse a hold note with decorators", () => {
         const ast = getAst("(160){4}4bh[4:3], 4hx[2#6:9], 4bhx[#1],")
 
-        expect(ast.noteCollections.length).toBe(1)
+        expect(ast.noteCollections.length).toBe(3)
 
         const hold1 = (<LanedNote>ast.noteCollections[0][0])
         expect(hold1.type).toBe(LanedType.Hold)
@@ -123,6 +133,8 @@ describe("AbsynGen - basic usage", () => {
         expect(hold1.location.index).toBe(3)
         expect(hold1.duration).toBeCloseTo(unquantise(4, 3, 160))
         expect(hold1.decorators).toBe(NoteDecorator.Break)
+        expect(hold1.slide).toBeNull()
+        expect(hold1.style).toBe(TapStyle.Circle)
 
         const hold2 = (<LanedNote>ast.noteCollections[1][0])
         expect(hold2.type).toBe(LanedType.Hold)
@@ -130,6 +142,8 @@ describe("AbsynGen - basic usage", () => {
         expect(hold2.location.index).toBe(3)
         expect(hold2.duration).toBeCloseTo(unquantise(6, 9, 2))
         expect(hold2.decorators).toBe(NoteDecorator.Ex)
+        expect(hold2.slide).toBeNull()
+        expect(hold2.style).toBe(TapStyle.Circle)
 
         const hold3 = (<LanedNote>ast.noteCollections[2][0])
         expect(hold3.type).toBe(LanedType.Hold)
@@ -137,6 +151,8 @@ describe("AbsynGen - basic usage", () => {
         expect(hold3.location.index).toBe(3)
         expect(hold3.duration).toBeCloseTo(1)
         expect(hold3.decorators).toBe(NoteDecorator.Ex | NoteDecorator.Break)
+        expect(hold3.slide).toBeNull()
+        expect(hold3.style).toBe(TapStyle.Circle)
     })
 
     // touchholds
@@ -151,6 +167,7 @@ describe("AbsynGen - basic usage", () => {
         expect(touchhold.location.fragment).toBe(Area.A)
         expect(touchhold.location.index).toBe(3)
         expect(touchhold.duration).toBeCloseTo(unquantise(4, 3, 160))
+        expect(touchhold.decorators).toBe(TouchDecorator.None)
     })
 
     it("can parse a touchhold note in the form xxh[bpm#a:b]", () => {
@@ -162,6 +179,7 @@ describe("AbsynGen - basic usage", () => {
         expect(touchhold.location.fragment).toBe(Area.B)
         expect(touchhold.location.index).toBe(3)
         expect(touchhold.duration).toBeCloseTo(unquantise(4, 3, 200))
+        expect(touchhold.decorators).toBe(TouchDecorator.None)
     })
 
     it("can parse a touchhold note in the form xxh[#secs]", () => {
@@ -173,33 +191,20 @@ describe("AbsynGen - basic usage", () => {
         expect(touchhold.location.fragment).toBe(Area.C)
         expect(touchhold.location.index).toBe(3)
         expect(touchhold.duration).toBeCloseTo(9)
+        expect(touchhold.decorators).toBe(TouchDecorator.None)
     })
 
     it("can parse a touchhold note with decorators", () => {
-        const ast = getAst("(160){4}D4bh[4:3], E4hx[2#6:9], A4bhx[#1],")
+        const ast = getAst("(160){4}D4fh[4:3],")
 
         expect(ast.noteCollections.length).toBe(1)
 
-        const touchhold1 = (<UnlanedNote>ast.noteCollections[0][0])
-        expect(touchhold1.type).toBe(UnlanedType.TouchHold)
-        expect(touchhold1.location.fragment).toBe(Area.D)
-        expect(touchhold1.location.index).toBe(3)
-        expect(touchhold1.duration).toBeCloseTo(unquantise(4, 3, 160))
-        expect(touchhold1.decorators).toBe(NoteDecorator.Break)
-
-        const touchhold2 = (<UnlanedNote>ast.noteCollections[1][0])
-        expect(touchhold2.type).toBe(UnlanedType.TouchHold)
-        expect(touchhold2.location.fragment).toBe(Area.E)
-        expect(touchhold2.location.index).toBe(3)
-        expect(touchhold2.duration).toBeCloseTo(unquantise(6, 9, 2))
-        expect(touchhold2.decorators).toBe(NoteDecorator.Ex)
-
-        const touchhold3 = (<UnlanedNote>ast.noteCollections[2][0])
-        expect(touchhold3.type).toBe(UnlanedType.TouchHold)
-        expect(touchhold3.location.fragment).toBe(Area.A)
-        expect(touchhold3.location.index).toBe(3)
-        expect(touchhold3.duration).toBeCloseTo(1)
-        expect(touchhold3.decorators).toBe(NoteDecorator.Ex | NoteDecorator.Break)
+        const touchhold = (<UnlanedNote>ast.noteCollections[0][0])
+        expect(touchhold.type).toBe(UnlanedType.TouchHold)
+        expect(touchhold.location.fragment).toBe(Area.D)
+        expect(touchhold.location.index).toBe(3)
+        expect(touchhold.duration).toBeCloseTo(unquantise(4, 3, 160))
+        expect(touchhold.decorators).toBe(TouchDecorator.Hanabi)
     })
 
     // slides 
@@ -228,7 +233,9 @@ describe("AbsynGen - basic usage", () => {
         })
     })
 
-    it("can parse a slide with multiple simple paths", () => {})
+    it("can parse a slide with multiple simple paths", () => {
+        
+    })
 
     it("can parse a slide with a single path with multiple segments running at a constant speed", () => {})
 
@@ -237,6 +244,8 @@ describe("AbsynGen - basic usage", () => {
     it("can parse a slide with multiple multi-segment constant speed paths", () => {})
 
     it("can parse a slide with multiple multi-segment variable speed paths", () => {})
+
+    it("can parse a slide with multiple multi-segment paths, one with variable speeds and the other constant", () => {})
 
     it("can parse the kamui slide", () => {})
 
@@ -262,6 +271,7 @@ describe("AbsynGen - basic usage", () => {
     })
 })
 
+describe("AbsynGen - whitespace", () => { })
 
 describe("AbsynGen - start timing", () => { 
     it("can correctly order notes' time", () => {

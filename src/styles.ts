@@ -1,5 +1,5 @@
 export enum TapStyle {
-    Circle,
+    Circle, // this also includes the hexagon hold shape
     Star, // rotates
     StarStationary
 }
