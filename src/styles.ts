@@ -4,9 +4,10 @@ export enum TapStyle {
     StarStationary
 }
 
-export enum StarAnimation {
-    FadeIn,
-    Sudden
+export enum StarEnterAnim {
+    Default, // star is always visible
+    FadeIn,  // star is invisible and fades in
+    Sudden   // star is invisible and suddenly appears when it needs to move
 }
 
 export enum NoteDecorator {

@@ -27,3 +27,4 @@ export function unquantise(divisions: number, num: number, bpm: number): number 
 export function quantise(sec: number, bpm: number, divisions?: number): number {
 
 }
+

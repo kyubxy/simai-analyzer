@@ -43,10 +43,12 @@ hold
 
 // the entire slide ie. 5^5[4:5]
 slide 
-	= loc:buttonLoc style:$("@"/"?"/"!")? part:slidePartial parts:("*" p:slidePartial {return p})* 
+	= loc:buttonLoc style:$("@"/"?"/"!")? brk:$"b"? ex:$"x"? part:slidePartial parts:("*" p:slidePartial {return p})* 
     {
     	return {
         	label:"slide",
+            brk: brk,
+            ex: ex,
             loc: loc,
             style: style,
             slidePaths: [part, ...parts]

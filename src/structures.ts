@@ -1,4 +1,5 @@
-import { NoteDecorator, StarAnimation, TapStyle, TouchDecorator } from "./styles"
+import { unquantise } from "./helpers"
+import { NoteDecorator, StarEnterAnim, TapStyle, TouchDecorator } from "./styles"
 import { LanedType, SlideType, UnlanedType } from "./types"
 
 // To maximise charting flexibility, we treat chart elements as blobs of data
@@ -13,17 +14,13 @@ import { LanedType, SlideType, UnlanedType } from "./types"
 // and not just seconds. for the time being we'll just stick with using seconds and
 // quantise the second values 
 
-export function secondsInMeasure(bpm: number, division: number, num: number): number {
-    throw new Error()
-}
-
 export class TimingMarker {
     constructor(public bpm: number, public division: number) {
 
     }
 
     getSecondsInMeasure(division?: number, num?: number): number {
-        return secondsInMeasure(this.bpm, division ?? 4, num ?? 1)
+        return unquantise(division ?? 4, num ?? 1, this.bpm)
     }
 }
 
@@ -63,15 +60,17 @@ export class LanedNote extends Note {
 
 export class Slide {
     time: number
-    delay: number
-    decorators: NoteDecorator
-    paths: SlidePath[]
+    constructor(
+        public paths: SlidePath[]
+    ) { }
 }
 
 export class SlidePath {
-    starAnimation: StarAnimation
-    slideSegments: SlideSegment[]
-    //decorators: NoteDecorator
+    constructor (
+        public delay: number,
+        public slideSegments: SlideSegment[],
+        public decorators: NoteDecorator
+    ) { }
 
     isEachSlide(): boolean {
         return this.slideSegments.length > 1
@@ -79,9 +78,11 @@ export class SlidePath {
 }
 
 export class SlideSegment {
-    type: SlideType
-    duration: number
-    vertices: Location[]
+    constructor(
+        public type: SlideType,
+        public duration: number,
+        public vertices: Location[],
+    ) { }
 }
 
 export class Location {

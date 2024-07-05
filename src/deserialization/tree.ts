@@ -39,6 +39,8 @@ export interface Slide extends TreeNote {
     loc: Loc
     style: string
     slidePaths: SlidePath[]
+    brk: string
+    ex: string
 }
 
 export interface SlidePath extends TreeNode { }
@@ -57,12 +59,12 @@ export interface SlideSegment extends TreeNode {}
 
 export interface SlideSegmentConst extends SlideSegment {
     type: string
-    verts: string[]
+    verts: Loc[]
 }
 
 export interface SlideSegmentVar extends SlideSegment {
     type: string
-    verts: string[]
+    verts: Loc[]
     len: LenSlide
     brk: string
 }
