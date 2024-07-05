@@ -1,8 +1,8 @@
 import { genAbsyn } from "../src/deserialization/absyn"
 import { parse } from "../lib/parser"
 import { MaiChart } from "../src/maiChart"
-import { Area, LanedNote, TimingMarker, UnlanedNote } from "../src/structures"
-import { NoteDecorator, TapStyle, TouchDecorator } from "../src/styles"
+import { Area, LanedNote, secondsInMeasure, TimingMarker, UnlanedNote } from "../src/structures"
+import { NoteDecorator, StarAnimation, TapStyle, TouchDecorator } from "../src/styles"
 import { unquantise } from "../src/helpers"
 import { LanedType, SlideType, UnlanedType } from "../src/types"
 
@@ -224,45 +224,536 @@ describe("AbsynGen - basic usage", () => {
         expect(slideNote.slide).not.toBeNull()
         const slide = slideNote.slide!
         expect(slide.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-        const slideSegs = slide.paths[0].slideSegments[0]
-        expect(slideSegs.duration).toBeCloseTo(slideNote.duration)
-        expect(slideSegs.type).toBe(SlideType.Straight)
-        const expSeg = [3, 5]
-        slideSegs.vertices.forEach((v,i) => {
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(1)
+        const slideSeg = slidePath.slideSegments[0]
+        expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4, 3))
+        expect(slideSeg.type).toBe(SlideType.Straight)
+        const expSeg = [2, 4]
+        slideSeg.vertices.forEach((v,i) => {
+            expect(v.index).toBe(expSeg[i])
+        })
+    })
+
+    it("can parse a grand V slide", () => {
+        const ast = getAst("(160){4}3V56[4:3],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        const tp = new TimingMarker(160, 4)
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(1)
+        const slideSeg = slidePath.slideSegments[0]
+        expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4, 3))
+        expect(slideSeg.type).toBe(SlideType.Straight)
+        const expSeg = [2, 4, 5]
+        slideSeg.vertices.forEach((v,i) => {
             expect(v.index).toBe(expSeg[i])
         })
     })
 
     it("can parse a slide with multiple simple paths", () => {
-        
+        const ast = getAst("(160){4}3-5[4:3]*^8[3:5],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        const tp = new TimingMarker(160, 4)
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
+
+        expect(slide.paths.length).toBe(2)
+
+        // test path 1
+        {
+            const slidePath = slide.paths[0]
+            expect(slidePath.isEachSlide).toBe(false)
+            expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+            expect(slidePath.slideSegments.length).toBe(1)
+            const slideSeg = slidePath.slideSegments[0]
+            expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4, 3))
+            expect(slideSeg.type).toBe(SlideType.Straight)
+            const expSeg = [2, 4]
+            slideSeg.vertices.forEach((v,i) => {
+                expect(v.index).toBe(expSeg[i])
+            })
+        }
+
+        // test path 2
+        {
+            const slidePath = slide.paths[0]
+            expect(slidePath.isEachSlide).toBe(false)
+            expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+            expect(slidePath.slideSegments.length).toBe(1)
+            const slideSeg = slidePath.slideSegments[0]
+            expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(3, 5))
+            expect(slideSeg.type).toBe(SlideType.ShortArc)
+            const expSeg = [2, 7]
+            slideSeg.vertices.forEach((v,i) => {
+                expect(v.index).toBe(expSeg[i])
+            })
+        }
     })
 
-    it("can parse a slide with a single path with multiple segments running at a constant speed", () => {})
+    it("can parse a slide with a single path with multiple segments running at a constant speed", () => {
+        const ast = getAst("(160){4}3-5^2[4:3],")
 
-    it("can parse a slide with a single path with multiple segments running at variable speeds", () => {})
+        expect(ast.noteCollections.length).toBe(1)
 
-    it("can parse a slide with multiple multi-segment constant speed paths", () => {})
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
 
-    it("can parse a slide with multiple multi-segment variable speed paths", () => {})
+        const tp = new TimingMarker(160, 4)
 
-    it("can parse a slide with multiple multi-segment paths, one with variable speeds and the other constant", () => {})
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(2)
+        const globalSpeed = tp.getSecondsInMeasure(4, 3) / 2
+        // test slide segment 1
+        {
+            const slideSeg = slidePath.slideSegments[0]
+            expect(slideSeg.duration).toBeCloseTo(globalSpeed)
+            expect(slideSeg.type).toBe(SlideType.Straight)
+            const expSeg = [2, 4]
+            slideSeg.vertices.forEach((v,i) => {
+                expect(v.index).toBe(expSeg[i])
+            })
+        }
 
-    it("can parse the kamui slide", () => {})
+        // test slide segment 2
+        {
+            const slideSeg = slidePath.slideSegments[1]
+            expect(slideSeg.duration).toBeCloseTo(globalSpeed)
+            expect(slideSeg.type).toBe(SlideType.ShortArc)
+            const expSeg = [4, 3]
+            slideSeg.vertices.forEach((v,i) => {
+                expect(v.index).toBe(expSeg[i])
+            })
+        }
+    })
+
+    it("can parse a slide with a single path with multiple segments running at variable speeds", () => {
+        const ast = getAst("(160){4}3-5[4:3]^2[9:2],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        const tp = new TimingMarker(160, 4)
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(2)
+        // test slide segment 1
+        {
+            const slideSeg = slidePath.slideSegments[0]
+            expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4, 3))
+            expect(slideSeg.type).toBe(SlideType.Straight)
+            const expSeg = [2, 4]
+            slideSeg.vertices.forEach((v,i) => {
+                expect(v.index).toBe(expSeg[i])
+            })
+        }
+
+        // test slide segment 2
+        {
+            const slideSeg = slidePath.slideSegments[1]
+            expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(9, 2))
+            expect(slideSeg.type).toBe(SlideType.ShortArc)
+            const expSeg = [4, 3]
+            slideSeg.vertices.forEach((v,i) => {
+                expect(v.index).toBe(expSeg[i])
+            })
+        }
+    })
+
+    it("can parse a multi-path, multi-segment slide, both paths with constant speed segments", () => {
+        const ast = getAst("(160){4}3-5^2[4:3]*p2w7[1:8],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        const tp = new TimingMarker(160, 4)
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
+
+        expect(slide.paths.length).toBe(2)
+
+        // test path 1
+        {
+            const slidePath = slide.paths[0]
+            expect(slidePath.isEachSlide).toBe(false)
+            expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+            expect(slidePath.slideSegments.length).toBe(2)
+
+            const globalSpeed = tp.getSecondsInMeasure(4,3) / 2
+
+            // test slide segment 1
+            {
+                const slideSeg = slidePath.slideSegments[0]
+                expect(slideSeg.duration).toBeCloseTo(globalSpeed)
+                expect(slideSeg.type).toBe(SlideType.Straight)
+                expect(slideSeg.vertices[0].index).toBe(2)
+                expect(slideSeg.vertices[1].index).toBe(4)
+            }
+
+            // test slide segment 2
+            {
+                const slideSeg = slidePath.slideSegments[1]
+                expect(slideSeg.duration).toBeCloseTo(globalSpeed)
+                expect(slideSeg.type).toBe(SlideType.ShortArc)
+                expect(slideSeg.vertices[0].index).toBe(4)
+                expect(slideSeg.vertices[1].index).toBe(1)
+            }
+        }
+
+        // test path 2
+        {
+            const slidePath = slide.paths[1]
+            expect(slidePath.isEachSlide).toBe(false)
+            expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+            expect(slidePath.slideSegments.length).toBe(2)
+
+            const globalSpeed = tp.getSecondsInMeasure(1,8) / 2
+
+            // test slide segment 1
+            {
+                const slideSeg = slidePath.slideSegments[0]
+                expect(slideSeg.duration).toBeCloseTo(globalSpeed)
+                expect(slideSeg.type).toBe(SlideType.PShape)
+                expect(slideSeg.vertices[0].index).toBe(2)
+                expect(slideSeg.vertices[1].index).toBe(1)
+            }
+
+            // test slide segment 2
+            {
+                const slideSeg = slidePath.slideSegments[1]
+                expect(slideSeg.duration).toBeCloseTo(globalSpeed)
+                expect(slideSeg.type).toBe(SlideType.Fan)
+                expect(slideSeg.vertices[0].index).toBe(1)
+                expect(slideSeg.vertices[1].index).toBe(6)
+            }
+        }
+    })
+
+    it("can parse a multi-path, multi-segment slide, both paths with variable speed segments", () => {
+        const ast = getAst("(160){4}3-5[1:2]^2[3:4]*p2[5:6]w7[7:8],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        const tp = new TimingMarker(160, 4)
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
+
+        expect(slide.paths.length).toBe(2)
+
+        // test path 1
+        {
+            const slidePath = slide.paths[0]
+            expect(slidePath.isEachSlide).toBe(false)
+            expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+            expect(slidePath.slideSegments.length).toBe(2)
+
+            // test slide segment 1
+            {
+                const slideSeg = slidePath.slideSegments[0]
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(0,1))
+                expect(slideSeg.type).toBe(SlideType.Straight)
+                expect(slideSeg.vertices[0].index).toBe(2)
+                expect(slideSeg.vertices[1].index).toBe(4)
+            }
+
+            // test slide segment 2
+            {
+                const slideSeg = slidePath.slideSegments[1]
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(2,3))
+                expect(slideSeg.type).toBe(SlideType.ShortArc)
+                expect(slideSeg.vertices[0].index).toBe(4)
+                expect(slideSeg.vertices[1].index).toBe(1)
+            }
+        }
+
+        // test path 2
+        {
+            const slidePath = slide.paths[1]
+            expect(slidePath.isEachSlide).toBe(false)
+            expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+            expect(slidePath.slideSegments.length).toBe(2)
+
+            // test slide segment 1
+            {
+                const slideSeg = slidePath.slideSegments[0]
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4,5))
+                expect(slideSeg.type).toBe(SlideType.PShape)
+                expect(slideSeg.vertices[0].index).toBe(2)
+                expect(slideSeg.vertices[1].index).toBe(1)
+            }
+
+            // test slide segment 2
+            {
+                const slideSeg = slidePath.slideSegments[1]
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(6,7))
+                expect(slideSeg.type).toBe(SlideType.Fan)
+                expect(slideSeg.vertices[0].index).toBe(1)
+                expect(slideSeg.vertices[1].index).toBe(6)
+            }
+        }
+    })
+
+    it("can parse a multi-path, multi-segment slide, one segment with variable speeds and the other constant", () => {
+        const ast = getAst("(160){4}3-5[1:2]^2[3:4]*p2w7[1:8],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        const tp = new TimingMarker(160, 4)
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
+
+        expect(slide.paths.length).toBe(2)
+
+        // test path 1
+        {
+            const slidePath = slide.paths[0]
+            expect(slidePath.isEachSlide).toBe(false)
+            expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+            expect(slidePath.slideSegments.length).toBe(2)
+
+            // test slide segment 1
+            {
+                const slideSeg = slidePath.slideSegments[0]
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(0,1))
+                expect(slideSeg.type).toBe(SlideType.Straight)
+                expect(slideSeg.vertices[0].index).toBe(2)
+                expect(slideSeg.vertices[1].index).toBe(4)
+            }
+
+            // test slide segment 2
+            {
+                const slideSeg = slidePath.slideSegments[1]
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(2,3))
+                expect(slideSeg.type).toBe(SlideType.ShortArc)
+                expect(slideSeg.vertices[0].index).toBe(4)
+                expect(slideSeg.vertices[1].index).toBe(1)
+            }
+        }
+
+        // test path 2
+        {
+            const slidePath = slide.paths[1]
+            expect(slidePath.isEachSlide).toBe(false)
+            expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+            expect(slidePath.slideSegments.length).toBe(2)
+
+            const globalSpeed = tp.getSecondsInMeasure(1,8) / 2
+
+            // test slide segment 1
+            {
+                const slideSeg = slidePath.slideSegments[0]
+                expect(slideSeg.duration).toBeCloseTo(globalSpeed)
+                expect(slideSeg.type).toBe(SlideType.PShape)
+                expect(slideSeg.vertices[0].index).toBe(2)
+                expect(slideSeg.vertices[1].index).toBe(1)
+            }
+
+            // test slide segment 2
+            {
+                const slideSeg = slidePath.slideSegments[1]
+                expect(slideSeg.duration).toBeCloseTo(globalSpeed)
+                expect(slideSeg.type).toBe(SlideType.Fan)
+                expect(slideSeg.vertices[0].index).toBe(1)
+                expect(slideSeg.vertices[1].index).toBe(6)
+            }
+        }
+    })
 
     // see the SLIDE section on the simai wiki for more information
     // https://w.atwiki.jp/simai/pages/1003.html#id_d9e6227a
 
-    it("can parse a slide with duration specified in the form [x:y]", () => {})
+    it("can parse a slide with duration specified in the form [bpm#x:y]", () => {
+        const ast = getAst("(160){4}3-5[180#4:3],")
 
-    it("can parse a slide with duration specified in the form [bpm#x:y]", () => {})
+        expect(ast.noteCollections.length).toBe(1)
 
-    it("can parse a slide with duration specified in the form [bpm#length]", () => {})
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
 
-    it("can parse a slide with duration specified in the form [delay##length]", () => {})
+        const tp = new TimingMarker(160, 4)
 
-    it("can parse a slide with duration specified in the form [delay##x:y]", () => {})
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(secondsInMeasure(180, 4, 1)) 
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(1)
+        const slideSeg = slidePath.slideSegments[0]
+        expect(slideSeg.duration).not.toBeCloseTo(tp.getSecondsInMeasure(4, 3))
+        expect(slideSeg.duration).toBeCloseTo(secondsInMeasure(180, 4, 3))
+        expect(slideSeg.type).toBe(SlideType.Straight)
+        expect(slideSeg.vertices[0].index).toBe(2)
+        expect(slideSeg.vertices[0].index).toBe(4)
+    })
 
-    it("can parse a slide with duration specified in the form [delay##bpm##x:y]", () => {})
+    it("can parse a slide with duration specified in the form [bpm#length]", () => {
+        const ast = getAst("(160){4}3-5[180#4],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(secondsInMeasure(180, 4, 1)) 
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(1)
+        const slideSeg = slidePath.slideSegments[0]
+        expect(slideSeg.duration).toBeCloseTo(4)
+        expect(slideSeg.type).toBe(SlideType.Straight)
+        expect(slideSeg.vertices[0].index).toBe(2)
+        expect(slideSeg.vertices[0].index).toBe(4)
+    })
+
+    it("can parse a slide with duration specified in the form [delay##length]", () => {
+        const ast = getAst("(160){4}3-5[1##2],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(1) 
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(1)
+        const slideSeg = slidePath.slideSegments[0]
+        expect(slideSeg.duration).toBeCloseTo(2)
+        expect(slideSeg.type).toBe(SlideType.Straight)
+        expect(slideSeg.vertices[0].index).toBe(2)
+        expect(slideSeg.vertices[0].index).toBe(4)
+    })
+
+    it("can parse a slide with duration specified in the form [delay##x:y]", () => {
+        const ast = getAst("(160){4}3-5[1##2:3],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        const tp = new TimingMarker(160, 4)
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(1) 
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(1)
+        const slideSeg = slidePath.slideSegments[0]
+        expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(2, 3))
+        expect(slideSeg.type).toBe(SlideType.Straight)
+        expect(slideSeg.vertices[0].index).toBe(2)
+        expect(slideSeg.vertices[0].index).toBe(4)
+    })
+
+    it("can parse a slide with duration specified in the form [delay##bpm##x:y]", () => {
+        const ast = getAst("(160){4}3-5[1##2##3:4],")
+
+        expect(ast.noteCollections.length).toBe(1)
+
+        const slideNote = (<LanedNote>ast.noteCollections[0][0])
+        expect(slideNote.location.fragment).toBe(Area.Tap)
+        expect(slideNote.location.index).toBe(2)
+        expect(slideNote.duration).toBe(0) // the note itself has zero duration
+
+        expect(slideNote.slide).not.toBeNull()
+        const slide = slideNote.slide!
+        expect(slide.delay).toBeCloseTo(1) 
+        expect(slide.paths.length).toBe(1)
+        const slidePath = slide.paths[0]
+        expect(slidePath.isEachSlide).toBe(false)
+        expect(slidePath.starAnimation).toBe(StarAnimation.FadeIn)
+        expect(slidePath.slideSegments.length).toBe(1)
+        const slideSeg = slidePath.slideSegments[0]
+        expect(slideSeg.duration).toBeCloseTo(secondsInMeasure(2, 3, 4))
+        expect(slideSeg.type).toBe(SlideType.Straight)
+        expect(slideSeg.vertices[0].index).toBe(2)
+        expect(slideSeg.vertices[0].index).toBe(4)
+    })
 
     it("can parse eaches", () => {
         const ast = getAst("(150){4}1/2,")

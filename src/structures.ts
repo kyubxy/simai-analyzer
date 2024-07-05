@@ -13,13 +13,17 @@ import { LanedType, SlideType, UnlanedType } from "./types"
 // and not just seconds. for the time being we'll just stick with using seconds and
 // quantise the second values 
 
+export function secondsInMeasure(bpm: number, division: number, num: number): number {
+    throw new Error()
+}
+
 export class TimingMarker {
     constructor(public bpm: number, public division: number) {
 
     }
 
-    getSecondsInMeasure(): number {
-        throw new Error()
+    getSecondsInMeasure(division?: number, num?: number): number {
+        return secondsInMeasure(this.bpm, division ?? 4, num ?? 1)
     }
 }
 
