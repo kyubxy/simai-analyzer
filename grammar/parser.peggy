@@ -82,11 +82,11 @@ slideType // does not include V type - this is processed separately
 lenSlide
 	= "["
     	x:( r:ratio  {return {label:"lenSlide", info:"ratio", ratio:r}}
-        / bpm:number "#" r:ratio {return {label: "lenSlide", info: "bpmratio", bpm:bpm, ratio:r}}
-        / bpm:number "#" len:number {return {label: "lenSlide", info:"bpmlen", bpm:bpm, len:len}}
-        / delay:number "##" len:number {return {label: "lenSlide", info:"delaylen", delay:delay, len:len}}
-        / delay:number "##" r:ratio {return {label:"lenSlide", info:"delayratio", delay:delay, ratio:r}}
         / delay:number "##"bpm:number "##" r:ratio {return {label:"lenSlide", info:"delaybpmratio", delay:delay, bpm:bpm, ratio:r}}
+        / delay:number "##" r:ratio {return {label:"lenSlide", info:"delayratio", delay:delay, ratio:r}}
+        / delay:number "##" len:number {return {label: "lenSlide", info:"delaylen", delay:delay, len:len}}
+		/ bpm:number "#" r:ratio {return {label: "lenSlide", info: "bpmratio", bpm:bpm, ratio:r}}
+        / bpm:number "#" len:number {return {label: "lenSlide", info:"bpmlen", bpm:bpm, len:len}}
     )"]" {return x}
        
 lenHold 
