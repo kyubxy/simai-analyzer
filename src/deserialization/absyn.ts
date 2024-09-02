@@ -251,7 +251,7 @@ class AbsynGen {
         const deco = path.segments[path.segments.length-1].brk === "b" ? 
             NoteDecorator.Break : NoteDecorator.None
 
-        let lastVertex = [rootLoc]
+        let lastVertex = rootLoc
 
         // parse segments
         const segs = []
@@ -259,10 +259,8 @@ class AbsynGen {
             if (seg.info !== "variableLen")
                 throw new AbsynError("non-variableLen slide segment found whilst iterating, got: " + seg.info)
 
-            const verts = []
-            lastVertex.forEach(v => verts.push(parseLoc(v)))
-            seg.verts.forEach(v => verts.push(parseLoc(v)))
-            lastVertex = seg.verts
+            const verts = [parseLoc(lastVertex)].concat(seg.verts.map(v => parseLoc(v)))
+            lastVertex = seg.verts.at(-1)
 
             const [_, length] = this.parseSlideLen(seg.len)
             const type = this.parseSlideType(seg.type)
@@ -284,7 +282,29 @@ class AbsynGen {
     }
 
     private parseConstSPth(path: Tree.ConstantLenSP, rootLoc: Tree.Loc): Absyn.SlidePath {
+        // delay is indicated directly in the slide
+        const [delay, tlength] = this.parseSlideLen(path.len)
+        // path decorator is also indicated directly in the slide
+        const deco = path.brk === "b" ? 
+            NoteDecorator.Break : NoteDecorator.None
 
+        // parse segments
+        const segs = []
+        let lastVertex = rootLoc
+        path.segments.forEach((seg, _) => {
+            if (seg.info !== "constantLen")
+                throw new AbsynError("non-constantLen slide segment found whilst iterating, got: " + seg.info)
+
+            const verts = [parseLoc(lastVertex)].concat(seg.verts.map(v => parseLoc(v)))
+            const type = this.parseSlideType(seg.type)
+            lastVertex = seg.verts.at(-1)
+
+            // the total length of the slide is shared equally among other constant slides
+            segs.push(new Absyn.SlideSegment(type, tlength / path.segments.length, verts))
+        }) 
+
+
+        return new Absyn.SlidePath(delay, segs, deco)
     }
 
     private parseSlideLen(len: Tree.LenSlide): [delay: number, length: number] {

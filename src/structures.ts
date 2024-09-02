@@ -20,6 +20,7 @@ export class TimingMarker {
     }
 
     getSecondsInMeasure(division?: number, num?: number): number {
+        if (division !== null && num !== null)
         return unquantise(division ?? 4, num ?? 1, this.bpm)
     }
 }
@@ -63,6 +64,10 @@ export class Slide {
     constructor(
         public paths: SlidePath[]
     ) { }
+
+    isEach(): boolean {
+        return this.paths.length > 1
+    }
 }
 
 export class SlidePath {
@@ -71,17 +76,13 @@ export class SlidePath {
         public slideSegments: SlideSegment[],
         public decorators: NoteDecorator
     ) { }
-
-    isEachSlide(): boolean {
-        return this.slideSegments.length > 1
-    }
 }
 
 export class SlideSegment {
     constructor(
         public type: SlideType,
         public duration: number,
-        public vertices: Location[],
+        public vertices: Location[], // list of all vertices in the slide segment (typically start and end locations)
     ) { }
 }
 

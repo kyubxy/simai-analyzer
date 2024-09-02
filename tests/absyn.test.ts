@@ -223,10 +223,10 @@ describe("AbsynGen - basic usage", () => {
 
         expect(slideNote.slide).not.toBeNull()
         const slide = slideNote.slide!
+        expect(slide.isEach()).toBe(false)
         expect(slide.paths.length).toBe(1)
         const slidePath = slide.paths[0]
         expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.slideSegments.length).toBe(1)
         const slideSeg = slidePath.slideSegments[0]
         expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4, 3))
@@ -249,14 +249,14 @@ describe("AbsynGen - basic usage", () => {
 
         expect(slideNote.slide).not.toBeNull()
         const slide = slideNote.slide!
+        expect(slide.isEach()).toBe(false)
         expect(slide.paths.length).toBe(1)
         const slidePath = slide.paths[0]
         expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.slideSegments.length).toBe(1)
         const slideSeg = slidePath.slideSegments[0]
         expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4, 3))
-        expect(slideSeg.type).toBe(SlideType.Straight)
+        expect(slideSeg.type).toBe(SlideType.GrandV)
         const expSeg = [2, 4, 5]
         slideSeg.vertices.forEach((v,i) => {
             expect(v.index).toBe(expSeg[i])
@@ -279,12 +279,12 @@ describe("AbsynGen - basic usage", () => {
         const slide = slideNote.slide!
 
         expect(slide.paths.length).toBe(2)
+        expect(slide.isEach()).toBe(true)
 
         // test path 1
         {
             const slidePath = slide.paths[0]
             expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-            expect(slidePath.isEachSlide()).toBe(false)
             expect(slidePath.slideSegments.length).toBe(1)
             const slideSeg = slidePath.slideSegments[0]
             expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4, 3))
@@ -297,9 +297,8 @@ describe("AbsynGen - basic usage", () => {
 
         // test path 2
         {
-            const slidePath = slide.paths[0]
+            const slidePath = slide.paths[1]
             expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-            expect(slidePath.isEachSlide()).toBe(false)
             expect(slidePath.slideSegments.length).toBe(1)
             const slideSeg = slidePath.slideSegments[0]
             expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(3, 5))
@@ -325,10 +324,10 @@ describe("AbsynGen - basic usage", () => {
 
         expect(slideNote.slide).not.toBeNull()
         const slide = slideNote.slide!
+        expect(slide.isEach()).toBe(false)
         expect(slide.paths.length).toBe(1)
         const slidePath = slide.paths[0]
         expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.slideSegments.length).toBe(2)
         const globalSpeed = tp.getSecondsInMeasure(4, 3) / 2
         // test slide segment 1
@@ -336,10 +335,10 @@ describe("AbsynGen - basic usage", () => {
             const slideSeg = slidePath.slideSegments[0]
             expect(slideSeg.duration).toBeCloseTo(globalSpeed)
             expect(slideSeg.type).toBe(SlideType.Straight)
-            const expSeg = [2, 4]
-            slideSeg.vertices.forEach((v,i) => {
-                expect(v.index).toBe(expSeg[i])
-            })
+            console.log(slideSeg.vertices)
+            const vs = slideSeg.vertices
+            expect(vs[0].index).toBe(2)
+            expect(vs[1].index).toBe(4)
         }
 
         // test slide segment 2
@@ -347,10 +346,9 @@ describe("AbsynGen - basic usage", () => {
             const slideSeg = slidePath.slideSegments[1]
             expect(slideSeg.duration).toBeCloseTo(globalSpeed)
             expect(slideSeg.type).toBe(SlideType.ShortArc)
-            const expSeg = [4, 3]
-            slideSeg.vertices.forEach((v,i) => {
-                expect(v.index).toBe(expSeg[i])
-            })
+            const vs = slideSeg.vertices
+            expect(vs[0].index).toBe(4)
+            expect(vs[1].index).toBe(1)
         }
     })
 
@@ -368,20 +366,19 @@ describe("AbsynGen - basic usage", () => {
 
         expect(slideNote.slide).not.toBeNull()
         const slide = slideNote.slide!
+        expect(slide.isEach()).toBe(false)
         expect(slide.paths.length).toBe(1)
         const slidePath = slide.paths[0]
         expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.slideSegments.length).toBe(2)
         // test slide segment 1
         {
             const slideSeg = slidePath.slideSegments[0]
             expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4, 3))
             expect(slideSeg.type).toBe(SlideType.Straight)
-            const expSeg = [2, 4]
-            slideSeg.vertices.forEach((v,i) => {
-                expect(v.index).toBe(expSeg[i])
-            })
+            const vs = slideSeg.vertices
+            expect(vs[0].index).toBe(2)
+            expect(vs[1].index).toBe(4)
         }
 
         // test slide segment 2
@@ -389,10 +386,9 @@ describe("AbsynGen - basic usage", () => {
             const slideSeg = slidePath.slideSegments[1]
             expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(9, 2))
             expect(slideSeg.type).toBe(SlideType.ShortArc)
-            const expSeg = [4, 3]
-            slideSeg.vertices.forEach((v,i) => {
-                expect(v.index).toBe(expSeg[i])
-            })
+            const vs = slideSeg.vertices
+            expect(vs[0].index).toBe(4)
+            expect(vs[1].index).toBe(1)
         }
     })
 
@@ -417,7 +413,6 @@ describe("AbsynGen - basic usage", () => {
         {
             const slidePath = slide.paths[0]
             expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-            expect(slidePath.isEachSlide()).toBe(false)
             expect(slidePath.slideSegments.length).toBe(2)
 
             const globalSpeed = tp.getSecondsInMeasure(4,3) / 2
@@ -445,7 +440,6 @@ describe("AbsynGen - basic usage", () => {
         {
             const slidePath = slide.paths[1]
             expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
-            expect(slidePath.isEachSlide()).toBe(false)
             expect(slidePath.slideSegments.length).toBe(2)
 
             const globalSpeed = tp.getSecondsInMeasure(1,8) / 2
@@ -490,7 +484,6 @@ describe("AbsynGen - basic usage", () => {
         // test path 1
         {
             const slidePath = slide.paths[0]
-            expect(slidePath.isEachSlide()).toBe(false)
             expect(slidePath.slideSegments.length).toBe(2)
             expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
 
@@ -516,7 +509,6 @@ describe("AbsynGen - basic usage", () => {
         // test path 2
         {
             const slidePath = slide.paths[1]
-            expect(slidePath.isEachSlide()).toBe(false)
             expect(slidePath.slideSegments.length).toBe(2)
             expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
 
@@ -560,7 +552,6 @@ describe("AbsynGen - basic usage", () => {
         // test path 1
         {
             const slidePath = slide.paths[0]
-            expect(slidePath.isEachSlide()).toBe(false)
             expect(slidePath.slideSegments.length).toBe(2)
             expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
 
@@ -586,7 +577,6 @@ describe("AbsynGen - basic usage", () => {
         // test path 2
         {
             const slidePath = slide.paths[1]
-            expect(slidePath.isEachSlide()).toBe(false)
             expect(slidePath.slideSegments.length).toBe(2)
             expect(slidePath.delay).toBeCloseTo(tp.getSecondsInMeasure()) 
 
@@ -630,9 +620,9 @@ describe("AbsynGen - basic usage", () => {
         expect(slideNote.slide).not.toBeNull()
         const slide = slideNote.slide!
         expect(slide.paths.length).toBe(1)
+        expect(slide.isEach()).toBe(false)
         const slidePath = slide.paths[0]
         expect(slidePath.delay).toBeCloseTo(unquantise(180, 4, 1)) 
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.slideSegments.length).toBe(1)
         const slideSeg = slidePath.slideSegments[0]
         expect(slideSeg.duration).not.toBeCloseTo(tp.getSecondsInMeasure(4, 3))
@@ -657,7 +647,6 @@ describe("AbsynGen - basic usage", () => {
         expect(slide.paths.length).toBe(1)
         const slidePath = slide.paths[0]
         expect(slidePath.delay).toBeCloseTo(unquantise(180, 4, 1)) 
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.slideSegments.length).toBe(1)
         const slideSeg = slidePath.slideSegments[0]
         expect(slideSeg.duration).toBeCloseTo(4)
@@ -681,7 +670,6 @@ describe("AbsynGen - basic usage", () => {
         expect(slide.paths.length).toBe(1)
         const slidePath = slide.paths[0]
         expect(slidePath.delay).toBeCloseTo(1)
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.slideSegments.length).toBe(1)
         const slideSeg = slidePath.slideSegments[0]
         expect(slideSeg.duration).toBeCloseTo(2)
@@ -707,7 +695,6 @@ describe("AbsynGen - basic usage", () => {
         expect(slide.paths.length).toBe(1)
         const slidePath = slide.paths[0]
         expect(slidePath.delay).toBeCloseTo(1) 
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.slideSegments.length).toBe(1)
         const slideSeg = slidePath.slideSegments[0]
         expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(2, 3))
@@ -727,7 +714,6 @@ describe("AbsynGen - basic usage", () => {
         const slide = slideNote.slide!
         expect(slide.paths.length).toBe(1)
         const slidePath = slide.paths[0]
-        expect(slidePath.isEachSlide()).toBe(false)
         expect(slidePath.delay).toBeCloseTo(1) 
         expect(slidePath.slideSegments.length).toBe(1)
         const slideSeg = slidePath.slideSegments[0]
