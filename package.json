@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "jest ./tests",
+    "test": "jest --verbose ./tests",
     "test-watch": "jest --watch ./tests",
     "format": "prettier --write .",
     "genparser": "peggy -o lib/parser.js --format es grammar/parser.peggy"

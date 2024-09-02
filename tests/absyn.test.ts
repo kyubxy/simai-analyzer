@@ -490,7 +490,7 @@ describe("AbsynGen - basic usage", () => {
             // test slide segment 1
             {
                 const slideSeg = slidePath.slideSegments[0]
-                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(0,1))
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(1,2))
                 expect(slideSeg.type).toBe(SlideType.Straight)
                 expect(slideSeg.vertices[0].index).toBe(2)
                 expect(slideSeg.vertices[1].index).toBe(4)
@@ -499,7 +499,7 @@ describe("AbsynGen - basic usage", () => {
             // test slide segment 2
             {
                 const slideSeg = slidePath.slideSegments[1]
-                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(2,3))
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(3,4))
                 expect(slideSeg.type).toBe(SlideType.ShortArc)
                 expect(slideSeg.vertices[0].index).toBe(4)
                 expect(slideSeg.vertices[1].index).toBe(1)
@@ -515,7 +515,7 @@ describe("AbsynGen - basic usage", () => {
             // test slide segment 1
             {
                 const slideSeg = slidePath.slideSegments[0]
-                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(4,5))
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(5,6))
                 expect(slideSeg.type).toBe(SlideType.PShape)
                 expect(slideSeg.vertices[0].index).toBe(2)
                 expect(slideSeg.vertices[1].index).toBe(1)
@@ -524,7 +524,7 @@ describe("AbsynGen - basic usage", () => {
             // test slide segment 2
             {
                 const slideSeg = slidePath.slideSegments[1]
-                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(6,7))
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(7,8))
                 expect(slideSeg.type).toBe(SlideType.Fan)
                 expect(slideSeg.vertices[0].index).toBe(1)
                 expect(slideSeg.vertices[1].index).toBe(6)
@@ -558,7 +558,7 @@ describe("AbsynGen - basic usage", () => {
             // test slide segment 1
             {
                 const slideSeg = slidePath.slideSegments[0]
-                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(0,1))
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(1,2))
                 expect(slideSeg.type).toBe(SlideType.Straight)
                 expect(slideSeg.vertices[0].index).toBe(2)
                 expect(slideSeg.vertices[1].index).toBe(4)
@@ -567,7 +567,7 @@ describe("AbsynGen - basic usage", () => {
             // test slide segment 2
             {
                 const slideSeg = slidePath.slideSegments[1]
-                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(2,3))
+                expect(slideSeg.duration).toBeCloseTo(tp.getSecondsInMeasure(3,4))
                 expect(slideSeg.type).toBe(SlideType.ShortArc)
                 expect(slideSeg.vertices[0].index).toBe(4)
                 expect(slideSeg.vertices[1].index).toBe(1)

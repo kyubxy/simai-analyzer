@@ -307,10 +307,21 @@ class AbsynGen {
         return new Absyn.SlidePath(delay, segs, deco)
     }
 
+    // TODO: not right yet
     private parseSlideLen(len: Tree.LenSlide): [delay: number, length: number] {
         switch(len.info) {
             case "ratio":
                 return [unquantise(4, 1, this.bpm), unquantise(len.ratio.div, len.ratio.num, this.bpm)]
+            case "bpmratio":
+                return [unquantise(4, 1, len.bpm), unquantise(len.ratio.div, len.ratio.num, len.bpm)]
+            case "bpmlen":
+                return [unquantise(4, 1, len.bpm), len.len]
+            case "delaylen":
+                return [len.delay, len.len]
+            case "delayratio":
+                return [len.delay, unquantise(len.ratio.div, len.ratio.num, this.bpm)]
+            case "delaybpmratio":
+                return [len.delay, unquantise(len.ratio.div, len.ratio.num, len.bpm)]
         }
         throw new AbsynError("Unrecognised slide length type: " + len.info)
     }
