@@ -710,9 +710,9 @@ describe("AbsynGen - whitespace", () => { })
 
 describe("AbsynGen - start timing", () => { 
     it("can correctly order notes' time", () => {
-        for (let i = 0; i < 10; i++) {
-            const ast = getAst("(160){"+i+"}1,1,1")
-        }
+        const ast = getAst("(160){4}1,1,1,")
+        expect(ast.noteCollections[0].time).toBe(0)
+        expect(ast.noteCollections[1].time).toBe(unquantise(4, 1, 160))
     })
 
     it("can correctly interpret empty segments", () => {

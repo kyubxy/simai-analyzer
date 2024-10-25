@@ -29,8 +29,14 @@ Javascript/Typescript.
 
 - Fully AstroDX compatible (but should work in 99% of use-cases)
 - Fully MajData/3Simai compatible
+- An absolute definitive on what modern simai semantics should be (but it will make some
+assumptions where there may be ambiguities)
 
-\* Coverage derived from running `npx jest --coverage`, 
-I don't update the readme a lot so the actual number may deviate slightly.
+\**Coverage derived from running `npx jest --coverage`, 
+I don't update the readme a lot so the actual number may deviate 
+slightly.*
 
 # Still a WIP
+
+## Contributing
+

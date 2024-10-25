@@ -1,8 +1,9 @@
 import { unquantise } from "../helpers";
 import { MaiChart } from "../maiChart";
-import * as Absyn from "../structures";
 import { NoteDecorator, StarEnterAnim, TapStyle, TouchDecorator } from "../styles";
 import { LanedType, SlideType, UnlanedType } from "../types";
+
+import * as Absyn from "../structures";
 import * as Tree from "./tree"
 
 class AbsynError extends Error {
@@ -51,8 +52,13 @@ class AbsynGen {
                 noteCols.push(noteCol)
             if (slide)
                 slides.push(slide)
-            if (t)
+            if (t) {
                 timing.push(t)
+                this.division = t.division
+                this.bpm = t.bpm
+            }
+            this.currentTime += unquantise(this.division, 1, this.bpm)
+            console.log("AYOO", this.division, this.bpm)
         }
         return new MaiChart(noteCols, slides, timing)
     }
@@ -82,6 +88,10 @@ class AbsynGen {
 
         if (timingIsDirty)
             timingMarker = new Absyn.TimingMarker(this.bpm, this.division)
+
+        if (noteCol) noteCol.time = this.currentTime
+        if (slide) slide.time = this.currentTime
+        if (timingMarker) timingMarker.time = this.currentTime
 
         return [noteCol, slide, timingMarker]
     }

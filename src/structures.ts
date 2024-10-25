@@ -15,6 +15,8 @@ import { LanedType, SlideType, UnlanedType } from "./types"
 // quantise the second values 
 
 export class TimingMarker {
+    time: number
+
     constructor(public bpm: number, public division: number) {
 
     }
