@@ -12,7 +12,6 @@ class AbsynError extends Error {
 
 // TODO: providing a default division could introduce novel semantics
 //      that are otherwise unsupported by other parsers/simulators
-const DEFAULT_DIVISION = 8
 
 export function genAbsyn(pt) {
     const a = new AbsynGen(pt)
@@ -28,7 +27,7 @@ class AbsynWarning {
 class AbsynGen {
     private currentTime: number = 0
     private bpm?: number
-    private division: number = DEFAULT_DIVISION
+    private division?: number = null
 
     private pt: any;
 
@@ -57,8 +56,9 @@ class AbsynGen {
                 this.division = t.division
                 this.bpm = t.bpm
             }
-            this.currentTime += unquantise(this.division, 1, this.bpm)
-            console.log("AYOO", this.division, this.bpm)
+
+            if (this.division != null && this.bpm != null)
+                this.currentTime += unquantise(this.division, 1, this.bpm)
         }
         return new MaiChart(noteCols, slides, timing)
     }
@@ -72,12 +72,13 @@ class AbsynGen {
         // parse bpm
         if (elem.bpm !== null) {
             this.bpm = elem.bpm
+            //this.validateBpm(this.bpm)
             timingIsDirty = true
         }
 
-        // parse length divider
+        // parse length divider 
         if (elem.len !== null) {
-            this.validateBpm(this.bpm)
+            this.division = elem.len.div // TODO: validate with getLengthDivider
             timingIsDirty = true
         }
 
@@ -86,8 +87,9 @@ class AbsynGen {
             [noteCol, slide] = this.parseNoteCol(elem.noteCol)
         }
 
-        if (timingIsDirty)
+        if (timingIsDirty) {
             timingMarker = new Absyn.TimingMarker(this.bpm, this.division)
+        }
 
         if (noteCol) noteCol.time = this.currentTime
         if (slide) slide.time = this.currentTime

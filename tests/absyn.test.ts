@@ -335,7 +335,6 @@ describe("AbsynGen - basic usage", () => {
             const slideSeg = slidePath.slideSegments[0]
             expect(slideSeg.duration).toBeCloseTo(globalSpeed)
             expect(slideSeg.type).toBe(SlideType.Straight)
-            console.log(slideSeg.vertices)
             const vs = slideSeg.vertices
             expect(vs[0].index).toBe(2)
             expect(vs[1].index).toBe(4)
@@ -716,11 +715,16 @@ describe("AbsynGen - start timing", () => {
     })
 
     it("can correctly interpret empty segments", () => {
-        const ast = getAst("(160){4}1,,1")
+        const ast = getAst("(160){4}1,,1,")
+        expect(ast.noteCollections[0].time).toBe(0)
+        expect(ast.noteCollections[1].time).toBe(unquantise(4, 2, 160))
     })
 
     it("can correctly handle bpm changes", () => {
-        const ast = getAst("(150){4}1,1,1,1,(200)1,1,1,1,")
+        const ast = getAst("(150){4}1,(200)1,")
+        console.log(ast.noteCollections)
+        expect(ast.noteCollections[0].time).toBe(0)
+        expect(ast.noteCollections[1].time).toBe(unquantise(4, 1, 150) + unquantise(4, 1, 200))
     })
 })
 
