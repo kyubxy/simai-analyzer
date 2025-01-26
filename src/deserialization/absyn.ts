@@ -113,9 +113,9 @@ const parseNote =
       case "slide":
         return parseSlideTap(note);
       case "touch":
-        return parseTouch(note)
+        return parseTouch(note);
       case "touchHold":
-        return parseTouchHold(note, bpm)
+        return parseTouchHold(note, bpm);
     }
   };
 
