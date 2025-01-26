@@ -1,10 +1,10 @@
 import { genAbsyn } from "../src/deserialization/absyn";
-import * as E from "fp-ts/Either";
-import { PathReporter } from "io-ts/lib/PathReporter";
 import { ParseTree } from "../src/deserialization/parse";
 
 describe("absyn", () => {
   it.each([
+    // Taps and decorators
+
     [
       "single tap",
       "3,",
@@ -240,6 +240,9 @@ describe("absyn", () => {
         slides: [],
       },
     ],
+
+    // Length divisions / BPM
+
     [
       "2 consecutive taps @ 120bpm",
       "(120)3,3,",
@@ -927,6 +930,9 @@ describe("absyn", () => {
         slides: [],
       },
     ],
+
+    // Holds
+
     [
       "hold @ 120bpm",
       "(120)3h[4:1],",
@@ -1132,6 +1138,99 @@ describe("absyn", () => {
           },
         ],
         slides: [],
+      },
+    ],
+
+    // Slides
+
+    [
+      "simple straight slide",
+      "(120)1-5[4:1],",
+      {
+        chart: [
+          {
+            bpm: 120,
+            len: null,
+            noteCol: [
+              {
+                type: "slide",
+                brk: "",
+                ex: "",
+                loc: {
+                  button: 1,
+                },
+                style: "",
+                slidePaths: [
+                  {
+                    type: "variable",
+                    segments: [
+                      {
+                        type: "-",
+                        verts: [
+                          {
+                            button: 5,
+                          },
+                        ],
+                        len: {
+                          type: "ratio",
+                          ratio: {
+                            div: 4,
+                            num: 1,
+                          },
+                        },
+                        brk: "",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        noteCollections: [
+          {
+            contents: [
+              {
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+                location: 0,
+                style: "circle",
+              },
+            ],
+            time: 0,
+          },
+        ],
+        timing: [
+          {
+            bpm: 120,
+            time: 0,
+          },
+        ],
+        slides: [
+          {
+            time: 0,
+            paths: [
+              {
+                delay: 0.5,
+                slideSegments: [
+                  {
+                    type: "straight",
+                    duration: 0.5,
+                    vertices: [0, 4],
+                  },
+                ],
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+              },
+            ],
+          },
+        ],
       },
     ],
   ])("%s - [ %s ]", (_, __, pt, expected) => {

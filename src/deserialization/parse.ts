@@ -48,21 +48,28 @@ export type Slide = {
 export type SlideHead =
   | {
       type: "variable";
-      segments: Array<Segment>;
+      segments: Array<Segment & { type: "variable" }>;
     }
   | {
       type: "constant";
-      segments: Array<Segment>;
+      segments: Array<Segment & { type: "constant" }>;
       len: LenSlide;
       brk: "b" | null;
     };
 
-export type Segment = {
-  type: SlideType;
-  verts: Array<ButtonLoc>;
-  len: LenSlide;
-  brk: "b" | null;
-};
+export type Segment =
+  | {
+      type: "variable";
+      slideType: SlideType;
+      verts: Array<ButtonLoc>;
+      len: LenSlide;
+      brk: "b" | null;
+    }
+  | {
+      type: "constant";
+      slideType: SlideType;
+      verts: Array<ButtonLoc>;
+    };
 
 export type LenSlide =
   | {

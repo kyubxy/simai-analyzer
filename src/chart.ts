@@ -64,7 +64,7 @@ export type Slide = {
 export type SlidePath = {
   delay: number;
   slideSegments: Array<SlideSegment>;
-  decorators: NoteDecorator;
+  decorators: NoteDecorator; // we'll keep support for ex slides for now to remain consistent
 };
 
 export type NoteDecorator = {
@@ -79,7 +79,7 @@ export type TouchDecorator = {
 export type SlideSegment = {
   type: SlideType;
   duration: number;
-  vertices: Array<Location>;
+  vertices: [Button, Button] | [Button, Button, Button]; // we use the second case for grand V slides with 3 vertices
 };
 
 export type Button = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;

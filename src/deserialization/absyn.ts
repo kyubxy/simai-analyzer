@@ -73,7 +73,7 @@ const parseElem = (elem: PT.Elem, state: State): [Composite, State] => {
       timing: pipe(
         O.fromNullable(elem.bpm),
         O.map((bpm) => ({
-          time: state.time,
+          time: internalState.time,
           bpm,
         })),
       ),
@@ -81,7 +81,8 @@ const parseElem = (elem: PT.Elem, state: State): [Composite, State] => {
         O.fromNullable(elem.noteCol),
         O.fold(
           () => [],
-          (noteCol) => parseSlides(noteCol, internalState.time),
+          (noteCol) =>
+            parseSlides(noteCol, internalState.time, internalState.bpm),
         ),
       ),
     },
@@ -109,8 +110,19 @@ const parseNote =
         return parseTap(note);
       case "hold":
         return parseHold(note, bpm);
+      case "slide":
+        return parseSlideTap(note);
+      case "touch":
+        return parseTouch(note)
+      case "touchHold":
+        return parseTouchHold(note, bpm)
     }
   };
+
+const parseSlideTap = (slide: PT.Slide): AST.Tap => ({
+  ...parseLaned(slide.ex, slide.brk, slide.loc),
+  style: "star",
+});
 
 const parseTap = (tap: PT.Tap): AST.Tap => ({
   ...parseLaned(tap.ex, tap.brk, tap.loc),
@@ -161,29 +173,130 @@ const parseLenHold = (dur: PT.LenHold, bpm: number): number => {
   }
 };
 
-const parseSlides = (noteCol: Array<PT.Note>, time: number): Array<AST.Slide> =>
+const parseSlides = (
+  noteCol: Array<PT.Note>,
+  time: number,
+  bpm: number,
+): Array<AST.Slide> =>
   noteCol
     .filter((x) => x.type === "slide")
     .map((slide) => ({
       time,
-      paths: slide.slidePaths.map(parseSlidePath),
+      paths: slide.slidePaths.map(parseSlidePath(bpm)),
     }));
 
-const parseSlidePath = (path: PT.SlideHead) => {
-  switch (path.type) {
-    case "constant":
-      return parseConstSlidePath(path);
-    case "variable":
-      return parseVariableSlidePath(path);
+const parseSlidePath =
+  (bpm: number) =>
+  (head: PT.SlideHead): AST.SlidePath => {
+    switch (head.type) {
+      case "constant":
+        const { delay, length } = parseLenSlide(head.len, bpm);
+        return {
+          delay,
+          slideSegments: head.segments.map(parseSegmentConstant(length)),
+          decorators: {
+            break: head.brk === "b",
+            ex: false,
+          },
+        };
+      case "variable":
+        return {
+          delay: parseLenSlide(head.segments[0].len, bpm).delay,
+          slideSegments: head.segments.map(parseSegmentVariable(bpm)),
+          decorators: {
+            break: head.segments.some((segment) => segment.brk),
+            ex: false,
+          },
+        };
+    }
+  };
+
+const parseSegmentVariable =
+  (bpm: number) =>
+  (segment: PT.Segment & { type: "variable" }): AST.SlideSegment => {
+    const { length } = parseLenSlide(segment.len, bpm);
+    const type = parseSlideType(segment.slideType);
+    return {
+      type,
+      duration: length,
+      vertices: parseVertices(segment.verts, type),
+    };
+  };
+
+const parseSegmentConstant =
+  (duration: number) =>
+  (segment: PT.Segment & { type: "constant" }): AST.SlideSegment => {
+    const type = parseSlideType(segment.slideType);
+    return {
+      type,
+      duration,
+      vertices: parseVertices(segment.verts, type),
+    };
+  };
+
+// We will opt to be more explicit about how vertex arrays are structured
+// than to care about code asthetics (we could've just as easily mapped and converted
+// to a tuple or remove tuples entirely and just mapped to get an array - the second
+// approach with lists instead of arrays removes more context attainable from types though)
+const parseVertices = (
+  verts: Array<PT.ButtonLoc>,
+  type: AST.SlideType,
+): [AST.Button, AST.Button] | [AST.Button, AST.Button, AST.Button] =>
+  type === "grandV"
+    ? [parseButton(verts[0]), parseButton(verts[1]), parseButton(verts[2])]
+    : [parseButton(verts[0]), parseButton(verts[1])];
+
+const parseSlideType = (slideType: PT.SlideType): AST.SlideType => {
+  return {
+    pp: "ppShape",
+    qq: "qqShape",
+    p: "pShape",
+    q: "qShape",
+    "-": "linear",
+    "<": "cClockwise",
+    ">": "clockwise",
+    "^": "shortArc",
+    v: "vShape",
+    s: "sShape",
+    z: "zShape",
+    w: "fan",
+  }[slideType] as AST.SlideType;
+};
+
+const parseLenSlide = (
+  lenSlide: PT.LenSlide,
+  bpm: number,
+): { delay: number; length: number } => {
+  switch (lenSlide.type) {
+    case "ratio":
+      return {
+        delay: unquantise(4, 1, bpm),
+        length: unquantise(lenSlide.ratio.div, lenSlide.ratio.num, bpm),
+      };
+    case "bpm-len":
+      return { delay: unquantise(4, 1, lenSlide.bpm), length: lenSlide.len };
+    case "bpm-ratio":
+      return {
+        delay: unquantise(4, 1, lenSlide.bpm),
+        length: unquantise(lenSlide.ratio.div, lenSlide.ratio.num, bpm),
+      };
+    case "delay-bpm-ratio":
+      return {
+        delay: lenSlide.delay,
+        length: unquantise(
+          lenSlide.ratio.div,
+          lenSlide.ratio.num,
+          lenSlide.bpm,
+        ),
+      };
+    case "delay-len":
+      return { delay: lenSlide.delay, length: lenSlide.len };
+    case "delay-ratio":
+      return {
+        delay: lenSlide.delay,
+        length: unquantise(lenSlide.ratio.div, lenSlide.ratio.num, bpm),
+      };
   }
-};
-
-const parseConstSlidePath = (path: PT.SlideHead): AST.SlidePath => {
-  throw new Error();
-};
-
-const parseVariableSlidePath = (path: PT.SlideHead): AST.SlidePath => {
-  throw new Error();
 };
 
 // we'll cut some corners with functional practices for
