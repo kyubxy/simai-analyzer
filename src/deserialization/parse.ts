@@ -1,220 +1,153 @@
-import * as t from "io-ts";
+export type ParseTree = {
+  chart: Array<Elem> | null;
+};
 
-// parsing already validates button locations are between 1-9
-const buttonLoc = t.readonly(
-  t.strict({
-    button: t.number,
-  })
-)
-export type ButtonLoc = t.TypeOf<typeof buttonLoc>;
+export type Elem = {
+  bpm: number | null;
+  len: LenDef | null;
+  noteCol: Array<Note> | null;
+};
 
-export const touchLoc = t.readonly(
-  t.strict({
-    pos: t.string,
-    frag: t.string,
-  }),
-);
-export type Loc = t.TypeOf<typeof touchLoc>;
+export type LenDef =
+  | {
+      type: "div";
+      val: number;
+    }
+  | {
+      type: "sec";
+      val: number;
+    };
 
-const ratio = t.readonly(
-  t.strict({
-    div: t.number,
-    num: t.number,
-  }),
-);
+export type Note = Tap | Hold | Touch | TouchHold | Slide;
 
-const lenHold = t.union([
-  t.readonly(
-    t.strict({
-      ratio: t.number,
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      bpm: t.number,
-      ratio: ratio,
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      delay: t.number, // seconds
-    }),
-  ),
-]);
+export type Tap = {
+  type: "tap";
+  loc: ButtonLoc;
+  brk: "b" | null;
+  ex: "x" | null;
+  star: "" | "$" | "$$";
+};
 
-const lenSlide = t.union([
-  t.readonly(
-    t.strict({
-      ratio: ratio,
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      delay: t.number,
-      bpm: t.number,
-      ratio: ratio,
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      delay: t.number,
-      ratio: ratio,
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      delay: t.number,
-      len: t.number,
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      bpm: t.number,
-      ratio: t.number,
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      bpm: t.number,
-      len: t.number,
-    }),
-  ),
-]);
+export type Hold = {
+  type: "hold";
+  loc: ButtonLoc;
+  brk: "b" | null;
+  ex: "x" | null;
+  dur: LenHold;
+};
 
-const slideType = t.union([
-  t.literal("pp"),
-  t.literal("qq"),
-  t.literal("p"),
-  t.literal("q"),
-  t.literal("-"),
-  t.literal("<"),
-  t.literal(">"),
-  t.literal("^"),
-  t.literal("v"),
-  t.literal("s"),
-  t.literal("z"),
-  t.literal("w"),
-]);
+export type Slide = {
+  type: "slide";
+  brk: "b" | null;
+  ex: "x" | null;
+  loc: ButtonLoc;
+  style: "" | "@" | "?" | "!";
+  slidePaths: Array<SlideHead>;
+};
 
-const touch = t.readonly(
-  t.strict({
-    noteType: t.literal("touch"),
-    loc: touchLoc,
-    firework: t.literal("f"),
-  }),
-);
+export type SlideHead =
+  | {
+      type: "variable";
+      segments: Array<Segment>;
+    }
+  | {
+      type: "constant";
+      segments: Array<Segment>;
+      len: LenSlide;
+      brk: "b" | null;
+    };
 
-const touchHold = t.readonly(
-  t.strict({
-    noteType: t.literal("touchHold"),
-    loc: touchLoc,
-    firework: t.literal("f"),
-    len: lenHold,
-  }),
-);
+export type Segment = {
+  type: SlideType;
+  verts: Array<ButtonLoc>;
+  len: LenSlide;
+  brk: "b" | null;
+};
 
-const slideTail = t.readonly(
-  t.strict({
-    type: slideType,
-    verts: t.array(buttonLoc),
-  }),
-);
+export type LenSlide =
+  | {
+      type: "ratio";
+      ratio: Ratio;
+    }
+  | {
+      type: "delay-bpm-ratio";
+      delay: number;
+      bpm: number;
+      ratio: Ratio;
+    }
+  | {
+      type: "delay-ratio";
+      delay: number;
+      ratio: Ratio;
+    }
+  | {
+      type: "delay-len";
+      delay: number;
+      len: number;
+    }
+  | {
+      type: "bpm-ratio";
+      bpm: number;
+      ratio: Ratio;
+    }
+  | {
+      type: "bpm-len";
+      bpm: number;
+      len: number;
+    };
 
-export const slideHead = t.union([
-  t.readonly(
-    t.strict({
-      timing: t.literal("variable"),
-      segments: t.array(
-        t.intersection([
-          slideTail,
-          t.readonly(
-            t.strict({
-              len: lenSlide,
-              brk: t.string,
-            }),
-          ),
-        ]),
-      ),
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      timing: t.literal("constant"),
-      segments: t.array(slideTail),
-      len: lenSlide,
-      brk: t.string,
-    }),
-  ),
-]);
-export type SlideHead = t.TypeOf<typeof slideHead>;
+export type SlideType =
+  | "pp"
+  | "qq"
+  | "p"
+  | "q"
+  | "-"
+  | "<"
+  | ">"
+  | "^"
+  | "v"
+  | "s"
+  | "z"
+  | "w";
 
-const slideBody = t.union([slideHead, slideTail]);
+export type LenHold =
+  | {
+      type: "ratio";
+      ratio: Ratio;
+    }
+  | {
+      type: "bpmratio";
+      bpm: number;
+      ratio: Ratio;
+    }
+  | {
+      type: "delay";
+      delay: number;
+    };
 
-export const slide = t.readonly(
-  t.strict({
-    noteType: t.literal("slide"),
-    brk: t.string,
-    ex: t.string,
-    loc: touchLoc,
-    style: t.union([t.literal("@"), t.literal("?"), t.literal("!")]),
-    slidePaths: t.array(slideBody),
-  }),
-);
-export type Slide = t.TypeOf<typeof slide>;
+export type Ratio = {
+  div: number;
+  num: number;
+};
 
-export const hold = t.readonly(
-  t.strict({
-    noteType: t.literal("hold"),
-    loc: touchLoc,
-    brk: t.string,
-    ex: t.string,
-    dur: lenHold,
-  }),
-);
-export type Hold = t.TypeOf<typeof hold>;
+export type Touch = {
+  type: "touch";
+  loc: TouchLoc;
+  firework: "f" | null;
+};
 
-export const tap = t.readonly(
-  t.strict({
-    noteType: t.literal("tap"),
-    loc: buttonLoc,
-    brk: t.union([t.string, t.null]),
-    ex: t.union([t.string, t.null]),
-    star: t.string,
-  }),
-);
-export type Tap = t.TypeOf<typeof tap>;
+export type TouchHold = {
+  type: "touchHold";
+  loc: TouchLoc;
+  firework: "f" | null;
+  len: LenHold;
+};
 
-const note = t.union([tap, hold]);
-export type Note = t.TypeOf<typeof note>;
+export type ButtonLoc = {
+  button: number;
+};
 
-export const lenDef = t.union([
-  t.readonly(
-    t.strict({
-      div: t.number,
-    }),
-  ),
-  t.readonly(
-    t.strict({
-      sec: t.number,
-    }),
-  ),
-]);
-export type Len = t.TypeOf<typeof lenDef>;
-
-export const elem = t.readonly(
-  t.strict({
-    bpm: t.union([t.number, t.null]),
-    len: t.union([lenDef, t.null]),
-    noteCol: t.union([t.readonlyArray(note), t.null]),
-  }),
-);
-export type Elem = t.TypeOf<typeof elem>;
-
-export const parseTree = t.readonly(
-  t.strict({
-    chart: t.union([t.readonlyArray(elem), t.null]),
-  }),
-);
-export type ParseTree = t.TypeOf<typeof parseTree>;
-
-export type ParseError = Error;
+export type TouchLoc = {
+  pos: number;
+  frag: string;
+};

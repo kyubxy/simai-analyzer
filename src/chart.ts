@@ -13,30 +13,31 @@ export type MaiChart = {
 };
 
 export type Chart = {
-  noteCollections: Array<NoteCollection>;
-  timing: Array<TimingMarker>;
-  slides: Array<Slide>;
+  noteCollections: ReadonlyArray<NoteCollection>;
+  timing: ReadonlyArray<TimingMarker>;
+  slides: ReadonlyArray<Slide>;
 };
 
 export type TimingMarker = {
   time: number;
   bpm: number;
-  division: number;
 };
 
 export type NoteCollection = {
-  contents: Array<Note>
+  contents: Array<Note>;
   time: number;
 };
 
 export type Note = Tap | Hold | Touch | TouchHold;
 
-export type Touch = {
+export type UnlanedNote = {
   location: Sensor;
   decorators: TouchDecorator;
 };
 
-export type TouchHold = Touch & {
+export type Touch = UnlanedNote;
+
+export type TouchHold = UnlanedNote & {
   duration: number;
 };
 

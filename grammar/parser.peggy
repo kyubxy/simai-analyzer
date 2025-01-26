@@ -20,8 +20,8 @@ bpmDef "BPM definition"
 
 lenDef "length divider definition"
 	= "{" len:(
-    	(div:number {return {div: div}}) /
-    	("#" sec:number {return {sec: sec}})
+    	(div:number {return {type: "div", val: div}}) /
+    	("#" sec:number {return {type: "sec", val: sec}})
       ) "}" {return len}
 
 // TODO: for the time being, we'll ignore the semantics of the ` operator
@@ -41,7 +41,7 @@ note
 decorators = brk:$"b" ex:$"x"? { return {brk:brk, ex:ex} } / ex:$"x" brk:$"b"? { return {brk:brk, ex:ex} }
 tap 
 	= loc:buttonLoc star:$"$"|..2| deco:decorators? 
-    { return {noteType:"tap", loc:loc, brk:deco?.brk??null, ex:deco?.ex??null, star:star}}
+    { return {type:"tap", loc:loc, brk:deco?.brk??null, ex:deco?.ex??null, star:star}}
     
 holdDecorators = 
 	"h" ex:$"x" brk:$"b"? { return {brk:brk, ex:ex} } / 
@@ -55,14 +55,14 @@ holdDecorators =
 	"h" {return {brk:undefined, ex:undefined}}
     
 hold = 
-	loc:buttonLoc hd:holdDecorators dur:lenHold {return{noteType:"hold", loc:loc,brk:hd?.brk??null,ex:hd?.ex??null,dur:dur}} 
+	loc:buttonLoc hd:holdDecorators dur:lenHold {return{type:"hold", loc:loc,brk:hd?.brk??null,ex:hd?.ex??null,dur:dur}} 
 
 // the entire slide ie. 5^5[4:5]
 slide 
 	= loc:buttonLoc style:$("@"/"?"/"!")? brk:$"b"? ex:$"x"? part:slideHead parts:("*" p:slideHead {return p})* 
     {
     	return {
-        	noteType:"slide",
+        	type:"slide",
             brk: brk,
             ex: ex,
             loc: loc,
@@ -76,9 +76,9 @@ slide
 slideHead
 	= segments:(st:slideTail len:lenSlide brk:$"b"? // although we "allow" adding breaks to individual slide segments, in reality the break effect will be applied to all segments in the path 
     	{return{type: st.type, verts:st.verts, len:len, brk:brk}}
-      )+ {return {timing: "variable", segments:segments}}
+      )+ {return {type: "variable", segments:segments}}
     / segments:slideTail+ len:lenSlide brk:$"b"?
-    	{return {timing: "constant", segments:segments, len:len, brk:brk}}
+    	{return {type: "constant", segments:segments, len:len, brk:brk}}
         
   
 // eg. ^4 or V35
@@ -87,29 +87,29 @@ slideTail
     / "V" v1:buttonLoc v2:buttonLoc {return {type:"V", verts:[v1,v2]}} // grand V
     
 touch
-	= l:touchLoc f:"f"? {return {noteType:"touch", loc: l, firework: f}}
+	= l:touchLoc f:"f"? {return {type:"touch", loc: l, firework: f}}
     
 touchHold
-	= l:touchLoc f:$"f"? "h" len:lenHold {return {noteType:"touchHold", loc: l, firework: f, len:len}}
+	= l:touchLoc f:$"f"? "h" len:lenHold {return {type:"touchHold", loc: l, firework: f, len:len}}
                        
 slideType // does not include V type - this is processed separately
 	= "pp"/"qq"/"p"/"q"/"-"/"<"/">"/"^"/"v"/"s"/"z"/"w"
        
 lenSlide
 	= "["
-    	x:( r:ratio  {return {ratio:r}}
-        / delay:number "##"bpm:number "##" r:ratio {return {delay:delay, bpm:bpm, ratio:r}}
-        / delay:number "##" r:ratio {return {delay:delay, ratio:r}}
-        / delay:number "##" len:number {return {delay:delay, len:len}}
-		/ bpm:number "#" r:ratio {return {bpm:bpm, ratio:r}}
-        / bpm:number "#" len:number {return {bpm:bpm, len:len}}
+    	x:( r:ratio  {return {type: "ratio", ratio:r}}
+        / delay:number "##"bpm:number "##" r:ratio {return {type: "delay-bpm-ratio", delay:delay, bpm:bpm, ratio:r}}
+        / delay:number "##" r:ratio {return {type: "delay-ratio", delay:delay, ratio:r}}
+        / delay:number "##" len:number {return {type: "delay-len", delay:delay, len:len}}
+		/ bpm:number "#" r:ratio {return {type: "bpm-ratio", bpm:bpm, ratio:r}}
+        / bpm:number "#" len:number {return {type: "bpm-len", bpm:bpm, len:len}}
     )"]" {return x}
        
 lenHold 
 	= "[" x:(
-    	 r:ratio {return {ratio: r}}			
-        /bpm:number "#" r:ratio {return {bpm:bpm, ratio: r}}			
-        /"#" s:number 		 {return {delay:s}}
+    	 r:ratio {return {type: "ratio", ratio: r}}			
+        /bpm:number "#" r:ratio {return {type: "bpmratio", bpm:bpm, ratio: r}}			
+        /"#" s:number 		 {return {type: "delay", delay:s}}
       )"]" {return x}
       
     
