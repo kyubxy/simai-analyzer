@@ -3,10 +3,9 @@ import * as AST from "../chart";
 import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
 import { pipe } from "fp-ts/lib/function";
-import { toAstConstant } from "./slides";
 
 // we'll cut some corners with functional practices for
-// these functions as they're rather trivial in nature
+// these functions as they are actually pretty trivial in their behaviour.
 // could look into making them more functional later if i'm bothered
 
 // these still maintain function purity
@@ -279,16 +278,22 @@ const parseSlidePath =
         const { delay, length } = parseLenSlide(slide.len, bpm);
         return {
           delay,
-          slideSegments: generateSegments(head, slide.segments, length),
+          slideSegments: generateSegmentsConstant(head, slide.segments, length),
           decorators: {
             break: slide.brk === "b",
             ex: false,
           },
         };
       case "variable":
-        break;
+        return {
+          delay: parseLenSlide(slide.segments[0].len, bpm).delay,
+          slideSegments: generateSegmentsVariable(head, slide.segments, bpm),
+          decorators: {
+            break: slide.segments.some((segment) => segment.brk),
+            ex: false,
+          },
+        };
     }
-    throw new Error();
   };
 
 const parseVertices = (
@@ -307,27 +312,60 @@ const parseVertices = (
   }
 };
 
+const partialSegmentNoDuration = (
+  head: PT.ButtonLoc,
+  second: PT.ConstantSegment,
+) => ({
+  type: parseSlideType(second.slideType),
+  vertices: parseVertices([head, ...second.verts]),
+});
+
 /**
- * Recursively generates a list of `SlideSegment`s for use in `SlidePath`.
+ * Recursively generates a list of constant `SlideSegment`s for use in `SlidePath`.
  *
  * @param head The button location of the slide's initial vertex
  * @param tail The rest of the slide's body
  * @returns A parsed list of `SlideSegment`s
  */
-const generateSegments = (
+const generateSegmentsConstant = (
   head: PT.ButtonLoc,
-  tail: Array<PT.Segment>,
+  tail: Array<PT.ConstantSegment>,
   duration: number,
 ): Array<AST.SlideSegment> =>
   tail.length === 0
     ? []
     : [
         {
-          type: parseSlideType(tail.at(0).slideType),
+          ...partialSegmentNoDuration(head, tail.at(0)),
           duration,
-          vertices: parseVertices([head, ...tail.at(0).verts]),
         },
-        ...generateSegments(tail.at(0).verts.at(-1), tail.slice(1), duration),
+        ...generateSegmentsConstant(
+          tail.at(0).verts.at(-1),
+          tail.slice(1),
+          duration / tail.length,
+        ),
+      ];
+
+/**
+ * Recursively generates a list of variable `SlideSegment`s for use in `SlidePath`.
+ *
+ * @param head The button location of the slide's initial vertex
+ * @param tail The rest of the slide's body
+ * @returns A parsed list of `SlideSegment`s
+ */
+const generateSegmentsVariable = (
+  head: PT.ButtonLoc,
+  tail: Array<PT.VariableSegment>,
+  bpm: number,
+): Array<AST.SlideSegment> =>
+  tail.length === 0
+    ? []
+    : [
+        {
+          ...partialSegmentNoDuration(head, tail.at(0)),
+          duration: parseLenSlide(tail.at(0).len, bpm).length,
+        },
+        ...generateSegmentsVariable(tail.at(0).verts.at(-1), tail.slice(1), bpm),
       ];
 
 const parseLenSlide = (

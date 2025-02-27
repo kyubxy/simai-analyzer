@@ -1415,7 +1415,7 @@ describe("absyn", () => {
                   },
                   {
                     type: "straight",
-                    duration: 0.5,
+                    duration: 0.25,
                     vertices: [3, 0],
                   },
                 ],
@@ -1517,7 +1517,7 @@ describe("absyn", () => {
             time: 0,
             paths: [
               {
-                delay: 0.25,
+                delay: 0.5,
                 slideSegments: [
                   {
                     type: "straight",
@@ -1623,16 +1623,16 @@ describe("absyn", () => {
             time: 0,
             paths: [
               {
-                delay: 0.25,
+                delay: 0.5,
                 slideSegments: [
                   {
                     type: "straight",
-                    duration: 0.5 / 3,
+                    duration: 0.5,
                     vertices: [0, 3],
                   },
                   {
                     type: "grandV",
-                    duration: (0.5 / 3) * 2,
+                    duration: 0.25,
                     vertices: [3, 0, 1],
                   },
                 ],

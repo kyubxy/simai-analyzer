@@ -1,10 +1,8 @@
 # Simai Analyzer
 
->Simai file parser for Javascript - basically [sus analyzer](https://www.npmjs.com/package/sus-analyzer) for simai
+>Functional and type-safe Simai file parser for Javascript - basically [sus analyzer](https://www.npmjs.com/package/sus-analyzer) for simai
 
-**Now written in fp-ts!**
-
-English | [日本語](docs/nihongo.md)
+Very WIP, i literally haven't even finished the readme yo.
 
 ## Installation
 
@@ -41,18 +39,18 @@ console.log(master.noteCollections)
 Introducing a reliable and correct simai deserializer for 
 Javascript/Typescript.
 
-**Why another parser? Isn't there already [simai.ts](TODO:)?**
+**Why another parser? Isn't there already [simai.ts](https://www.youtube.com/watch?v=QdzUcxnFD8c)?**
 
 Yes, but that library has its own slew of problems that make it harder for me to
-build my simai related projects. My parser makes a few guarentees that make life
-easier.
+build my simai related projects. My parser makes a few guarentees that 
+in reality make things much easier.
 
 - Entirely\* functional, statically typed and well-tested code 
-- A stronger stance on correctness over performance
+- A stronger emphasis on correctness over performance
 - Sane API structure 
 - Active support
 
-Read about why I think these are important on my [blog post](TODO:).
+Read about why I think these are important on my [blog post](https://www.youtube.com/watch?v=QdzUcxnFD8c).
 
 **What Simai Analyzer currently isn't**
 
@@ -63,7 +61,39 @@ assumptions where there may be ambiguities)
 
 \**Mostly functional - make a CTRL+F for the keywords `let` and `for`, you won't be disappointed :D*
 
-# Still a WIP
+## Building and Setup
+
+Simai analyzer is really small and easy to set up locally.
+
+**Clone the repo**
+
+```
+git clone https://www.youtube.com/watch?v=QdzUcxnFD8cTODO:
+```
+
+**Restore dependencies**
+
+```
+npm install
+```
+
+**Generate the parser**
+
+```
+npm run genparser
+```
+
+At the moment, the easiest way to interact directly with the parser
+is through unit tests. Simply add a test under `test/` and use
+
+```
+npm run test
+```
+
+to run the test suite, the existing tests should be 
+straightforward enough to base your tests off of.
 
 ## Contributing
+
+TODO:
 
