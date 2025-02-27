@@ -93,6 +93,12 @@ npm run test
 to run the test suite, the existing tests should be 
 straightforward enough to base your tests off of.
 
+To just play around with the tokenizer, copy and paste 
+[the parser grammar](grammar/parser.peggy) into the 
+[online peggy.js parser generator](https://peggyjs.org/online.html).
+Currently, this is the only way of interactively testing the grammar 
+(apart from unit tests).
+
 ## Contributing
 
 TODO:
