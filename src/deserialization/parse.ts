@@ -57,19 +57,19 @@ export type SlideHead =
       brk: "b" | null;
     };
 
-export type Segment =
+export type Segment = {
+  slideType: SlideType;
+  verts: Array<ButtonLoc>;
+} & (
   | {
       type: "variable";
-      slideType: SlideType;
-      verts: Array<ButtonLoc>;
       len: LenSlide;
       brk: "b" | null;
     }
   | {
       type: "constant";
-      slideType: SlideType;
-      verts: Array<ButtonLoc>;
-    };
+    }
+);
 
 export type LenSlide =
   | {

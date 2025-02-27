@@ -75,7 +75,7 @@ slide
 // eg. ^4[4:5]b or V35[3##3##3] 
 slideHead
 	= segments:(st:slideTail len:lenSlide brk:$"b"? // although we "allow" adding breaks to individual slide segments, in reality the break effect will be applied to all segments in the path 
-    	{return{type: st.type, verts:st.verts, len:len, brk:brk}}
+    	{return{slideType: st.slideType, verts:st.verts, len:len, brk:brk}}
       )+ {return {type: "variable", segments:segments}}
     / segments:slideTail+ len:lenSlide brk:$"b"?
     	{return {type: "constant", segments:segments, len:len, brk:brk}}
@@ -83,8 +83,8 @@ slideHead
   
 // eg. ^4 or V35
 slideTail
-	= type:slideType v1:buttonLoc {return {type:type, verts:[v1]}}
-    / "V" v1:buttonLoc v2:buttonLoc {return {type:"V", verts:[v1,v2]}} // grand V
+	= type:slideType v1:buttonLoc {return {slideType:type, verts:[v1]}}
+    / "V" v1:buttonLoc v2:buttonLoc {return {slideType:"V", verts:[v1,v2]}} // grand V
     
 touch
 	= l:touchLoc f:"f"? {return {type:"touch", loc: l, firework: f}}

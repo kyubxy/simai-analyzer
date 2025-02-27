@@ -1,5 +1,5 @@
-import { genAbsyn } from "../src/deserialization/absyn";
-import { ParseTree } from "../src/deserialization/parse";
+import { genAbsyn } from "../../src/deserialization/absyn";
+import { ParseTree } from "../../src/deserialization/parse";
 
 describe("absyn", () => {
   it.each([
@@ -1165,7 +1165,7 @@ describe("absyn", () => {
                     type: "variable",
                     segments: [
                       {
-                        type: "-",
+                        slideType: "-",
                         verts: [
                           {
                             button: 5,
@@ -1198,7 +1198,7 @@ describe("absyn", () => {
                   break: false,
                 },
                 location: 0,
-                style: "circle",
+                style: "star",
               },
             ],
             time: 0,
@@ -1221,6 +1221,419 @@ describe("absyn", () => {
                     type: "straight",
                     duration: 0.5,
                     vertices: [0, 4],
+                  },
+                ],
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      "grand V slide",
+      "(120)1V56[4:1],",
+      {
+        chart: [
+          {
+            bpm: 120,
+            len: null,
+            noteCol: [
+              {
+                type: "slide",
+                brk: "",
+                ex: "",
+                loc: {
+                  button: 1,
+                },
+                style: "",
+                slidePaths: [
+                  {
+                    type: "variable",
+                    segments: [
+                      {
+                        slideType: "V",
+                        verts: [
+                          {
+                            button: 5,
+                          },
+                          {
+                            button: 6,
+                          },
+                        ],
+                        len: {
+                          type: "ratio",
+                          ratio: {
+                            div: 4,
+                            num: 1,
+                          },
+                        },
+                        brk: "",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        noteCollections: [
+          {
+            contents: [
+              {
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+                location: 0,
+                style: "star",
+              },
+            ],
+            time: 0,
+          },
+        ],
+        timing: [
+          {
+            bpm: 120,
+            time: 0,
+          },
+        ],
+        slides: [
+          {
+            time: 0,
+            paths: [
+              {
+                delay: 0.5,
+                slideSegments: [
+                  {
+                    type: "grandV",
+                    duration: 0.5,
+                    vertices: [0, 4, 5],
+                  },
+                ],
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      "constant composite slide",
+      "(120)1-4-1[4:1],",
+      {
+        chart: [
+          {
+            bpm: 120,
+            len: null,
+            noteCol: [
+              {
+                type: "slide",
+                brk: "",
+                ex: "",
+                loc: {
+                  button: 1,
+                },
+                style: "",
+                slidePaths: [
+                  {
+                    type: "constant",
+                    segments: [
+                      {
+                        slideType: "-",
+                        verts: [
+                          {
+                            button: 4,
+                          },
+                        ],
+                      },
+                      {
+                        slideType: "-",
+                        verts: [
+                          {
+                            button: 1,
+                          },
+                        ],
+                      },
+                    ],
+                    len: {
+                      type: "ratio",
+                      ratio: {
+                        div: 4,
+                        num: 1,
+                      },
+                    },
+                    brk: "",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        noteCollections: [
+          {
+            contents: [
+              {
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+                location: 0,
+                style: "star",
+              },
+            ],
+            time: 0,
+          },
+        ],
+        timing: [
+          {
+            bpm: 120,
+            time: 0,
+          },
+        ],
+        slides: [
+          {
+            time: 0,
+            paths: [
+              {
+                delay: 0.5,
+                slideSegments: [
+                  {
+                    type: "straight",
+                    duration: 0.5,
+                    vertices: [0, 3],
+                  },
+                  {
+                    type: "straight",
+                    duration: 0.5,
+                    vertices: [3, 0],
+                  },
+                ],
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      "variable composite slide",
+      "(120)1-4[4:1]-1[4:1],",
+      {
+        chart: [
+          {
+            bpm: 120,
+            len: null,
+            noteCol: [
+              {
+                type: "slide",
+                brk: "",
+                ex: "",
+                loc: {
+                  button: 1,
+                },
+                style: "",
+                slidePaths: [
+                  {
+                    type: "variable",
+                    segments: [
+                      {
+                        slideType: "-",
+                        verts: [
+                          {
+                            button: 4,
+                          },
+                        ],
+                        len: {
+                          type: "ratio",
+                          ratio: {
+                            div: 4,
+                            num: 1,
+                          },
+                        },
+                        brk: "",
+                      },
+                      {
+                        slideType: "-",
+                        verts: [
+                          {
+                            button: 1,
+                          },
+                        ],
+                        len: {
+                          type: "ratio",
+                          ratio: {
+                            div: 4,
+                            num: 1,
+                          },
+                        },
+                        brk: "",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        noteCollections: [
+          {
+            contents: [
+              {
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+                location: 0,
+                style: "star",
+              },
+            ],
+            time: 0,
+          },
+        ],
+        timing: [
+          {
+            bpm: 120,
+            time: 0,
+          },
+        ],
+        slides: [
+          {
+            time: 0,
+            paths: [
+              {
+                delay: 0.25,
+                slideSegments: [
+                  {
+                    type: "straight",
+                    duration: 0.5,
+                    vertices: [0, 3],
+                  },
+                  {
+                    type: "straight",
+                    duration: 0.5,
+                    vertices: [3, 0],
+                  },
+                ],
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      "constant composite slide with grand V",
+      "(120)1-4V12[4:1],", // in reality this shape is invalid, but we'll test for this later
+      {
+        chart: [
+          {
+            bpm: 120,
+            len: null,
+            noteCol: [
+              {
+                type: "slide",
+                brk: "",
+                ex: "",
+                loc: {
+                  button: 1,
+                },
+                style: "",
+                slidePaths: [
+                  {
+                    type: "constant",
+                    segments: [
+                      {
+                        slideType: "-",
+                        verts: [
+                          {
+                            button: 4,
+                          },
+                        ],
+                      },
+                      {
+                        slideType: "V",
+                        verts: [
+                          {
+                            button: 1,
+                          },
+                          {
+                            button: 2,
+                          },
+                        ],
+                      },
+                    ],
+                    len: {
+                      type: "ratio",
+                      ratio: {
+                        div: 4,
+                        num: 1,
+                      },
+                    },
+                    brk: "",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        noteCollections: [
+          {
+            contents: [
+              {
+                decorators: {
+                  ex: false,
+                  break: false,
+                },
+                location: 0,
+                style: "star",
+              },
+            ],
+            time: 0,
+          },
+        ],
+        timing: [
+          {
+            bpm: 120,
+            time: 0,
+          },
+        ],
+        slides: [
+          {
+            time: 0,
+            paths: [
+              {
+                delay: 0.25,
+                slideSegments: [
+                  {
+                    type: "straight",
+                    duration: 0.5 / 3,
+                    vertices: [0, 3],
+                  },
+                  {
+                    type: "grandV",
+                    duration: (0.5 / 3) * 2,
+                    vertices: [3, 0, 1],
                   },
                 ],
                 decorators: {

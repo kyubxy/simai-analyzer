@@ -3,6 +3,82 @@ import * as AST from "../chart";
 import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
 import { pipe } from "fp-ts/lib/function";
+import { toAstConstant } from "./slides";
+
+// we'll cut some corners with functional practices for
+// these functions as they're rather trivial in nature
+// could look into making them more functional later if i'm bothered
+
+// these still maintain function purity
+
+const parseSlideType = (slideType: PT.SlideType): AST.SlideType => {
+  const result = {
+    pp: "ppShape",
+    qq: "qqShape",
+    p: "pShape",
+    q: "qShape",
+    "-": "straight",
+    "<": "cClockwise",
+    ">": "clockwise",
+    "^": "shortArc",
+    v: "vShape",
+    s: "sShape",
+    z: "zShape",
+    w: "fan",
+    V: "grandV",
+  }[slideType] as AST.SlideType;
+
+  if (result === undefined) throw new Error("Unidentified slide type");
+
+  return result;
+};
+
+const parseButton = (loc: PT.ButtonLoc): AST.Button => {
+  const b = loc.button;
+  if (b < 1 || b > 8) throw new Error(`Invalid button [${b}].`);
+  return (b - 1) as AST.Button; // buttons inside the parsing framework are zero-indexed
+};
+
+const parseSensor = (sens: PT.TouchLoc): AST.Sensor => {
+  if (["A", "B", "D", "E"].includes(sens.frag)) {
+    if (sens.pos < 1 || sens.pos > 8)
+      throw new Error(`Invalid sensor [${sens.frag}${sens.pos}]`);
+    return {
+      index: (sens.pos - 1) as AST.Button,
+      area: sens.frag as AST.SensorRegion,
+    };
+  } else if (sens.frag === "C") {
+    if (sens.pos < 1 || sens.pos > 3)
+      throw new Error(`Invalid sensor [${sens.frag}${sens.pos}]`);
+    return {
+      index: (sens.pos - 1) as AST.Button,
+      area: sens.frag as AST.SensorRegion,
+    };
+  } else {
+    throw new Error(
+      `Invalid sensor area [${sens.frag}] in [${sens.frag}${sens.pos}]`,
+    );
+  }
+};
+
+const getTimeDelta = (bpm: number, div: PT.LenDef): number => {
+  switch (div.type) {
+    case "sec":
+      return div.val;
+    case "div":
+      return unquantise(div.val, 1, bpm);
+  }
+};
+
+function unquantise(divisions: number, num: number, bpm: number): number {
+  // TODO: I think io-ts-types gives access to "branded" types that can
+  // delegate these guards to type checks.
+  if (divisions === 0) throw new Error("division cannot be 0");
+  if (bpm === 0) throw new Error("bpm cannot be 0");
+  if (divisions < 0) throw new Error("division must be greater than 0");
+  if (bpm < 0) throw new Error("bpm must be greater than 0");
+  return (60 / bpm) * (4 / divisions) * num;
+}
 
 type State = {
   // in practice, time should always be one step ahead of everything else in the state
@@ -173,95 +249,86 @@ const parseLenHold = (dur: PT.LenHold, bpm: number): number => {
   }
 };
 
+/**
+ * Processes the entire note collection and only parses the slides.
+ *
+ * @param noteCol
+ * @param time
+ * @param bpm
+ * @returns The AST Slide object.
+ */
 const parseSlides = (
   noteCol: Array<PT.Note>,
   time: number,
   bpm: number,
 ): Array<AST.Slide> =>
-  noteCol
-    .filter((x) => x.type === "slide")
-    .map((slide) => ({
+  pipe(
+    noteCol,
+    A.filter((x) => x.type === "slide"),
+    A.map((slide) => ({
       time,
-      paths: slide.slidePaths.map(parseSlidePath(bpm)),
-    }));
+      paths: slide.slidePaths.map(parseSlidePath(slide.loc, bpm)),
+    })),
+  );
 
 const parseSlidePath =
-  (bpm: number) =>
-  (head: PT.SlideHead): AST.SlidePath => {
-    switch (head.type) {
+  (head: PT.ButtonLoc, bpm: number) =>
+  (slide: PT.SlideHead): AST.SlidePath => {
+    switch (slide.type) {
       case "constant":
-        const { delay, length } = parseLenSlide(head.len, bpm);
+        const { delay, length } = parseLenSlide(slide.len, bpm);
         return {
           delay,
-          slideSegments: head.segments.map(parseSegmentConstant(length)),
+          slideSegments: generateSegments(head, slide.segments, length),
           decorators: {
-            break: head.brk === "b",
+            break: slide.brk === "b",
             ex: false,
           },
         };
       case "variable":
-        return {
-          delay: parseLenSlide(head.segments[0].len, bpm).delay,
-          slideSegments: head.segments.map(parseSegmentVariable(bpm)),
-          decorators: {
-            break: head.segments.some((segment) => segment.brk),
-            ex: false,
-          },
-        };
+        break;
     }
+    throw new Error();
   };
 
-const parseSegmentVariable =
-  (bpm: number) =>
-  (segment: PT.Segment & { type: "variable" }): AST.SlideSegment => {
-    const { length } = parseLenSlide(segment.len, bpm);
-    const type = parseSlideType(segment.slideType);
-    return {
-      type,
-      duration: length,
-      vertices: parseVertices(segment.verts, type),
-    };
-  };
-
-const parseSegmentConstant =
-  (duration: number) =>
-  (segment: PT.Segment & { type: "constant" }): AST.SlideSegment => {
-    const type = parseSlideType(segment.slideType);
-    return {
-      type,
-      duration,
-      vertices: parseVertices(segment.verts, type),
-    };
-  };
-
-// We will opt to be more explicit about how vertex arrays are structured
-// than to care about code asthetics (we could've just as easily mapped and converted
-// to a tuple or remove tuples entirely and just mapped to get an array - the second
-// approach with lists instead of arrays removes more context attainable from types though)
 const parseVertices = (
   verts: Array<PT.ButtonLoc>,
-  type: AST.SlideType,
-): [AST.Button, AST.Button] | [AST.Button, AST.Button, AST.Button] =>
-  type === "grandV"
-    ? [parseButton(verts[0]), parseButton(verts[1]), parseButton(verts[2])]
-    : [parseButton(verts[0]), parseButton(verts[1])];
-
-const parseSlideType = (slideType: PT.SlideType): AST.SlideType => {
-  return {
-    pp: "ppShape",
-    qq: "qqShape",
-    p: "pShape",
-    q: "qShape",
-    "-": "linear",
-    "<": "cClockwise",
-    ">": "clockwise",
-    "^": "shortArc",
-    v: "vShape",
-    s: "sShape",
-    z: "zShape",
-    w: "fan",
-  }[slideType] as AST.SlideType;
+): [AST.Button, AST.Button] | [AST.Button, AST.Button, AST.Button] => {
+  if (verts.length === 3) {
+    return [
+      parseButton(verts[0]),
+      parseButton(verts[1]),
+      parseButton(verts[2]),
+    ];
+  } else if (verts.length === 2) {
+    return [parseButton(verts[0]), parseButton(verts[1])];
+  } else {
+    throw new Error("Too many buttons in vertex list.");
+  }
 };
+
+/**
+ * Recursively generates a list of `SlideSegment`s for use in `SlidePath`.
+ *
+ * @param head The button location of the slide's initial vertex
+ * @param tail The rest of the slide's body
+ * @returns A parsed list of `SlideSegment`s
+ */
+const generateSegments = (
+  head: PT.ButtonLoc,
+  tail: Array<PT.Segment>,
+  duration: number,
+): Array<AST.SlideSegment> =>
+  tail.length === 0
+    ? []
+    : [
+        {
+          type: parseSlideType(tail.at(0).slideType),
+          duration,
+          vertices: parseVertices([head, ...tail.at(0).verts]),
+        },
+        ...generateSegments(tail.at(0).verts.at(-1), tail.slice(1), duration),
+      ];
 
 const parseLenSlide = (
   lenSlide: PT.LenSlide,
@@ -298,56 +365,3 @@ const parseLenSlide = (
       };
   }
 };
-
-// we'll cut some corners with functional practices for
-// these functions as they're rather trivial to write
-// could look into making them more functional later if i'm bothered
-
-// these still maintain function purity
-
-const parseButton = (loc: PT.ButtonLoc): AST.Button => {
-  const b = loc.button;
-  if (b < 1 || b > 8) throw new Error(`Invalid button [${b}].`);
-  return (b - 1) as AST.Button; // buttons inside the parsing framework are zero-indexed
-};
-
-const parseSensor = (sens: PT.TouchLoc): AST.Sensor => {
-  if (["A", "B", "D", "E"].includes(sens.frag)) {
-    if (sens.pos < 1 || sens.pos > 8)
-      throw new Error(`Invalid sensor [${sens.frag}${sens.pos}]`);
-    return {
-      index: (sens.pos - 1) as AST.Button,
-      area: sens.frag as AST.SensorRegion,
-    };
-  } else if (sens.frag === "C") {
-    if (sens.pos < 1 || sens.pos > 3)
-      throw new Error(`Invalid sensor [${sens.frag}${sens.pos}]`);
-    return {
-      index: (sens.pos - 1) as AST.Button,
-      area: sens.frag as AST.SensorRegion,
-    };
-  } else {
-    throw new Error(
-      `Invalid sensor area [${sens.frag}] in [${sens.frag}${sens.pos}]`,
-    );
-  }
-};
-
-const getTimeDelta = (bpm: number, div: PT.LenDef): number => {
-  switch (div.type) {
-    case "sec":
-      return div.val;
-    case "div":
-      return unquantise(div.val, 1, bpm);
-  }
-};
-
-function unquantise(divisions: number, num: number, bpm: number): number {
-  // TODO: I think io-ts gives access to "branded" types that can
-  // delegate these guards to type checks.
-  if (divisions === 0) throw new Error("division cannot be 0");
-  if (bpm === 0) throw new Error("bpm cannot be 0");
-  if (divisions < 0) throw new Error("division must be greater than 0");
-  if (bpm < 0) throw new Error("bpm must be greater than 0");
-  return (60 / bpm) * (4 / divisions) * num;
-}
