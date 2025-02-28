@@ -1,6 +1,6 @@
 # Simai Analyzer
 
->Functional and type-safe Simai file parser for Javascript - basically [sus analyzer](https://www.npmjs.com/package/sus-analyzer) for simai
+>Functional Simai file parser for Typescript - basically [sus analyzer](https://www.npmjs.com/package/sus-analyzer) for simai
 
 Very WIP, i literally haven't even finished the readme yo.
 
