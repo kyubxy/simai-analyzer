@@ -4,7 +4,7 @@
     }
 }}
 
-start
+start 
 	= chart:chart? ("E"/!.) { return chart }
     
 chart
@@ -54,8 +54,13 @@ holdDecorators =
 	"h" brk:$"b" { return {brk:brk, ex:undefined} } /
 	"h" {return {brk:undefined, ex:undefined}}
     
+// for the time being, we'll cheat and accept a superset of the correct syntaxes
+// eg. 4h[4:1]xbx is acceptable. TODO: look for another grammar generator or come up
+// with a better grammar
 hold = 
+	loc:buttonLoc "h" dur:lenHold ex:"x"? brk:"b"? ex2:"x"? {return{type:"hold", loc:loc,brk:brk??null,ex:ex??ex2??null,dur:dur}} /
 	loc:buttonLoc hd:holdDecorators dur:lenHold {return{type:"hold", loc:loc,brk:hd?.brk??null,ex:hd?.ex??null,dur:dur}} 
+    
 
 // the entire slide ie. 5^5[4:5]
 slide 
@@ -118,7 +123,7 @@ ratio
 	= d:integer ":" n:integer {return {div: d, num: n}}
     
 touchLoc
-	= f:[A-B|D-E] i:[1-8] {return {pos: i, frag: f}} / "C" i:[1-3]? {return {pos: i, frag:"C"}}
+	= f:[A-B|D-E] i:[1-8] {return {pos: i, frag: f}} / "C" i:[1-3]? "x"? {return {pos: i, frag:"C"}}
     
 buttonLoc
 	= l:[1-8] {return {button: parseInt(l)}}

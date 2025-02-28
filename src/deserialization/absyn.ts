@@ -39,6 +39,7 @@ const parseButton = (loc: PT.ButtonLoc): AST.Button => {
 };
 
 const parseSensor = (sens: PT.TouchLoc): AST.Sensor => {
+  if (sens.frag === "C") sens.pos ??= 1; // No one actually uses the Cn syntax and just writes C for the sensor.
   if (["A", "B", "D", "E"].includes(sens.frag)) {
     if (sens.pos < 1 || sens.pos > 8)
       throw new Error(`Invalid sensor [${sens.frag}${sens.pos}]`);
@@ -365,7 +366,11 @@ const generateSegmentsVariable = (
           ...partialSegmentNoDuration(head, tail.at(0)),
           duration: parseLenSlide(tail.at(0).len, bpm).length,
         },
-        ...generateSegmentsVariable(tail.at(0).verts.at(-1), tail.slice(1), bpm),
+        ...generateSegmentsVariable(
+          tail.at(0).verts.at(-1),
+          tail.slice(1),
+          bpm,
+        ),
       ];
 
 const parseLenSlide = (

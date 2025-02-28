@@ -1,15 +1,17 @@
+export type RawMaidata = { [key: string]: string };
+
 export type MaiChart = {
   title: string;
   artist: string;
   author: string;
-  // probs not the smartest way of doing this
-  easy: Chart;
-  basic: Chart;
-  advanced: Chart;
-  expert: Chart;
-  master: Chart;
-  remaster: Chart;
-  original: Chart;
+  offset: number;
+  levels: { [key: string]: Level };
+  raw: RawMaidata;
+};
+
+export type Level = {
+  chart?: Chart;
+  level?: string;
 };
 
 export type Chart = {
