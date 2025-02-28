@@ -22,7 +22,7 @@ const data = `
 &wholebpm=180
 &inote_5=(180.0){1},{8}3,2,1,,3,4,,6,{8}5,,7,8,,{57}2,,,,,,,E`;
 const chart = deserialize(data);
-console.log(chart.master.noteCollections)
+console.log(chart.levels["master"].noteCollections)
 ```
 
 **Deserialize a single difficulty:**
@@ -30,7 +30,7 @@ console.log(chart.master.noteCollections)
 import { deserializeSingle } from "simai-analyzer/simai";
 
 const data = `(180.0){1},{8}3,2,1,,3,4,,6,{8}5,,7,8,,{57}2,,,,,,,E`;
-const master = deserializeSingle(data);
+const master = deserializeChart(data);
 console.log(master.noteCollections)
 ```
 
