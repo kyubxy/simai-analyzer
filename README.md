@@ -100,6 +100,8 @@ Currently, this is the only way of interactively testing the grammar
 (apart from unit tests).
 
 ## Contributing
+Feel free to raise issues or submit PRs in any format, I don't have any strict templates or requirements for people to follow in order to contribute.
 
-TODO:
+If you're going to raise an issue, describe the bug in as much detail as you can, I will ignore or close the really vague ones.
 
+Write code that is functional, makes ample use of the type system and includes tests. Those are all the whole point of this project.
