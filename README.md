@@ -7,7 +7,7 @@ Very WIP, i literally haven't even finished the readme yo.
 ## Installation
 
 ```
-npm i I'll upload the npm package someday...
+npm i simai-analyzer
 ```
 
 ## Usage
