@@ -2,7 +2,6 @@
   "name": "simai-analyzer",
   "version": "1.0.0",
   "description": "A robust, tested and functional solution for parsing simai chart data",
-  "main": "index.js",
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watch ./tests",
@@ -13,7 +12,7 @@
     "simai",
     "parser"
   ],
-  "author": "kyubey",
+  "author": "kyubxy",
   "license": "ISC",
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
@@ -28,7 +27,6 @@
   },
   "dependencies": {
     "babel-jest": "^29.7.0",
-    "fp-ts": "^2.16.9",
-    "io-ts": "^2.2.22"
+    "fp-ts": "^2.16.9"
   }
 }

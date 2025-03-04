@@ -1,4 +1,4 @@
-import { Chart, Level, MaiChart } from "./chart";
+import { Chart, Level, MaidataFile } from "./chart";
 import { genAbsyn } from "./deserialization/absyn";
 import { parse } from "../lib/parser";
 import { pipe } from "fp-ts/lib/function";
@@ -48,12 +48,12 @@ const defaultLevels: Array<LevelMetadata> = [
   },
 ];
 
-export const deserializeChart = (data: string): Chart => pipe(data, parse, genAbsyn)
+export const deserialize = (data: string): Chart => pipe(data, parse, genAbsyn)
 
-export const deserialize = (
+export const deserializeSingle = (
   maidata: string,
   customLevels?: Array<LevelMetadata>,
-): MaiChart => {
+): MaidataFile => {
   const rawMaidata = parseMaidata(maidata);
   return {
     title: rawMaidata["title"],
@@ -68,7 +68,7 @@ export const deserialize = (
             level: levelKey in rawMaidata ? rawMaidata[levelKey] : undefined,
             chart:
               chartKey in rawMaidata
-                ? deserializeChart(rawMaidata[chartKey])
+                ? deserialize(rawMaidata[chartKey])
                 : undefined,
           } satisfies Level,
         ],
@@ -79,6 +79,6 @@ export const deserialize = (
 };
 
 // TODO:
-export const serializeChart = (chart: MaiChart): string => {
+export const serializeChart = (chart: MaidataFile): string => {
   throw new Error("Not implemented yet.");
 };
