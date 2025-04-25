@@ -1,6 +1,6 @@
 {
   "name": "simai-analyzer",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A robust, tested and functional solution for parsing simai chart data",
   "scripts": {
     "test": "jest",
@@ -15,8 +15,14 @@
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "include": ["src", "lib"],
-  "files": ["dist", "lib"],
+  "include": [
+    "src",
+    "lib"
+  ],
+  "files": [
+    "dist",
+    "lib"
+  ],
   "author": "kyubxy",
   "license": "ISC",
   "devDependencies": {
