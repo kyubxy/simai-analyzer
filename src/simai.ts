@@ -129,4 +129,4 @@ export const maxHoldDuration = (noteCol: Notes.NoteCollection) =>
   noteCol.contents
     .filter(({ type }) => type === "hold" || type === "touchHold")
     .map((n) => (n as Notes.Hold | Notes.TouchHold).duration)
-    .reduce((acc, curr) => Math.max(acc, curr));
+    .reduce((acc, curr) => Math.max(acc, curr), 0);
