@@ -67,12 +67,15 @@ export type UnlanedNote = {
 /**
  * Touch note.
  */
-export type Touch = UnlanedNote;
+export type Touch = UnlanedNote & {
+  type: "touch";
+};
 
 /**
  * Touch hold
  */
 export type TouchHold = UnlanedNote & {
+  type: "touchHold";
   duration: number;
 };
 
@@ -88,6 +91,7 @@ export type LanedNote = {
  * Tap note
  */
 export type Tap = LanedNote & {
+  type: "tap";
   style: TapStyle;
 };
 
@@ -95,6 +99,7 @@ export type Tap = LanedNote & {
  * Hold note
  */
 export type Hold = LanedNote & {
+  type: "hold";
   duration: number;
 };
 

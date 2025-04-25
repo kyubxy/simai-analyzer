@@ -4,12 +4,6 @@ import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
 import { pipe } from "fp-ts/lib/function";
 
-// we'll cut some corners with functional practices for
-// these functions as they are actually pretty trivial in their behaviour.
-// could look into making them more functional later if i'm bothered
-
-// these still maintain function purity
-
 const parseSlideType = (slideType: PT.SlideType): AST.SlideType => {
   const result = {
     pp: "ppShape",
@@ -198,21 +192,25 @@ const parseNote =
 const parseSlideTap = (slide: PT.Slide): AST.Tap => ({
   ...parseLaned(slide.ex, slide.brk, slide.loc),
   style: "star",
+  type: "tap",
 });
 
 const parseTap = (tap: PT.Tap): AST.Tap => ({
   ...parseLaned(tap.ex, tap.brk, tap.loc),
   style:
     tap.star === "" ? "circle" : tap.star === "$" ? "star" : "starStationary",
+  type: "tap",
 });
 
 const parseHold = (hold: PT.Hold, bpm: number): AST.Hold => ({
   ...parseLaned(hold.ex, hold.brk, hold.loc),
   duration: parseLenHold(hold.dur, bpm),
+  type: "hold",
 });
 
 const parseTouch = (touch: PT.Touch): AST.Touch => ({
   ...parseUnlaned(touch.firework, touch.loc),
+  type: "touch",
 });
 
 const parseTouchHold = (
@@ -221,6 +219,7 @@ const parseTouchHold = (
 ): AST.TouchHold => ({
   ...parseUnlaned(touchHold.firework, touchHold.loc),
   duration: parseLenHold(touchHold.len, bpm),
+  type: "touchHold",
 });
 
 const parseLaned = (ex: "x" | null, brk: "b" | null, loc: PT.ButtonLoc) => ({

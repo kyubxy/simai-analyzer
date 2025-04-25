@@ -1,8 +1,10 @@
 import { Chart, Level, MaidataFile } from "./chart";
+import * as Notes from "./chart";
 import { genAbsyn } from "./deserialization/absyn";
 import { parse } from "../lib/parser";
 import { pipe } from "fp-ts/lib/function";
 import { parseMaidata } from "./deserialization/maidataParser";
+import { flatMapTaskEither } from "fp-ts/lib/ReaderTaskEither";
 
 export type LevelMetadata = {
   difficulty: string;
@@ -48,9 +50,10 @@ const defaultLevels: Array<LevelMetadata> = [
   },
 ];
 
-export const deserialize = (data: string): Chart => pipe(data, parse, genAbsyn)
+export const deserializeSingle = (data: string): Chart =>
+  pipe(data, parse, genAbsyn);
 
-export const deserializeSingle = (
+export const deserialize = (
   maidata: string,
   customLevels?: Array<LevelMetadata>,
 ): MaidataFile => {
@@ -68,7 +71,7 @@ export const deserializeSingle = (
             level: levelKey in rawMaidata ? rawMaidata[levelKey] : undefined,
             chart:
               chartKey in rawMaidata
-                ? deserialize(rawMaidata[chartKey])
+                ? deserializeSingle(rawMaidata[chartKey])
                 : undefined,
           } satisfies Level,
         ],
@@ -79,6 +82,40 @@ export const deserializeSingle = (
 };
 
 // TODO:
-export const serializeChart = (chart: MaidataFile): string => {
+export const serialize = (chart: MaidataFile): string => {
   throw new Error("Not implemented yet.");
 };
+
+/**
+ * Given a full slide path, computes the total duration of the longest
+ * slide path. The longest duration is the sum of that path's initial delay
+ * and the time taken to complete the slide body.
+ *
+ * @param slide The slide to process
+ * @returns The length in seconds of the longest path in the slide.
+ */
+// TODO: test this
+export const slideVisibleDuration = (slide: Notes.Slide): number =>
+  slide.paths.reduce<number>(
+    (maxPathDuration, path) =>
+      Math.max(
+        maxPathDuration,
+        path.slideSegments.reduce<number>(
+          (maxSegmentDuration, segment) =>
+            Math.max(maxSegmentDuration, segment.duration),
+          0,
+        ) + path.delay,
+      ),
+    0,
+  );
+
+/**
+ * Gets the length of the longest hold in a note collection. 
+ * @param noteCol 
+ * @returns 
+ */
+export const maxHoldDuration = (noteCol: Notes.NoteCollection) =>
+  noteCol.contents
+    .filter(({ type }) => type === "hold" || type === "touchHold")
+    .map((n) => (n as Notes.Hold | Notes.TouchHold).duration)
+    .reduce((acc, curr) => Math.max(acc, curr));

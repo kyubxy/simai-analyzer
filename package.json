@@ -1,17 +1,22 @@
 {
   "name": "simai-analyzer",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "A robust, tested and functional solution for parsing simai chart data",
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watch ./tests",
     "format": "prettier --write .",
-    "genparser": "peggy -o lib/parser.js --format es grammar/parser.peggy"
+    "genparser": "peggy -o lib/parser.js --format es grammar/parser.peggy",
+    "build": "tsc && cp -r lib dist/lib"
   },
   "keywords": [
     "simai",
     "parser"
   ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "include": ["src", "lib"],
+  "files": ["dist", "lib"],
   "author": "kyubxy",
   "license": "ISC",
   "devDependencies": {
@@ -19,6 +24,7 @@
     "@babel/preset-typescript": "^7.26.0",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.14",
+    "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
     "peggy": "^4.2.0",
     "prettier": "3.4.2",
@@ -26,7 +32,16 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "babel-jest": "^29.7.0",
     "fp-ts": "^2.16.9"
+  },
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true
   }
 }
