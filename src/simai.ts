@@ -109,6 +109,17 @@ export const slideVisibleDuration = (slide: Notes.Slide): number =>
     0,
   );
 
+export const noteDuration = (note: Notes.Note) => {
+  switch(note.type) {
+    case "tap":
+    case "touch":
+      return 0;
+    case "hold":
+    case "touchHold":
+      return note.duration;
+  }
+}
+
 /**
  * Gets the length of the longest hold in a note collection. 
  * @param noteCol 
