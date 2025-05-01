@@ -50,9 +50,20 @@ const defaultLevels: Array<LevelMetadata> = [
   },
 ];
 
+/**
+ * Deserialize a single difficulty
+ * @param data 
+ * @returns 
+ */
 export const deserializeSingle = (data: string): Chart =>
   pipe(data, parse, genAbsyn);
 
+/**
+ * Deserialize the entire file
+ * @param maidata 
+ * @param customLevels 
+ * @returns 
+ */
 export const deserialize = (
   maidata: string,
   customLevels?: Array<LevelMetadata>,

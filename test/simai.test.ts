@@ -4,15 +4,21 @@ import { grievousLady } from "./chartData/grievousLady";
 import { lowercaseLifetimeMaidata } from "./chartData/lowercaseLifetimeMaidata";
 
 import { parseMaidata } from "../src/deserialization/maidataParser";
-import { deserialize, deserializeChart } from "../src/simai";
+import { deserialize, deserializeSingle } from "../src/simai";
+import { luciaRemas } from "./chartData/lucia";
 
 describe("deserialization", () => {
+  it("test", () => {
+    const e = deserializeSingle(luciaRemas);
+    expect(1).toBe(1);
+  });
+
   it.each([
     ["fragrance master", fragrance],
     ["raven emperor master", ravenEmperor],
     ["grievous lady master", grievousLady],
   ])("deserializes %s without issue", (_, data) => {
-    expect(() => deserializeChart(data)).not.toThrow();
+    expect(() => deserializeSingle(data)).not.toThrow();
   });
 
   it.each([
@@ -41,7 +47,7 @@ E4/8,,7/B3,7,B2,6,E2,6,E4,5,B3,5,B2/5,5,6/E2,6,
 
   it("parses the entire chart data", () => {
     const chart = lowercaseLifetimeMaidata;
-    const actual = parseMaidata(chart)
+    const actual = parseMaidata(chart);
     expect(actual["title"]).toBe("lowercase lifetime");
     expect(actual["artist"]).toBe("ZAQUVA");
     expect(actual["first"]).toBe("2.54");
@@ -57,5 +63,5 @@ E4/8,,7/B3,7,B2,6,E2,6,E4,5,B3,5,B2/5,5,6/E2,6,
     expect(actual.offset).toBe(2.54);
     expect(actual.author).toBe("kyubey");
     expect(actual.levels["master"].level).toBe("14");
-  })
+  });
 });
