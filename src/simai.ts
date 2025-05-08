@@ -4,7 +4,6 @@ import { genAbsyn } from "./deserialization/absyn";
 import { parse } from "../lib/parser";
 import { pipe } from "fp-ts/lib/function";
 import { parseMaidata } from "./deserialization/maidataParser";
-import { flatMapTaskEither } from "fp-ts/lib/ReaderTaskEither";
 
 export type LevelMetadata = {
   difficulty: string;

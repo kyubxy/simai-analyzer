@@ -54,7 +54,12 @@ export type NoteCollection = {
 /**
  * "Anything that makes a sound when you hit it". All game objects except for slides.
  */
-export type Note = Tap | Hold | Touch | TouchHold;
+export type Note = {
+  /**
+   * Whether this note is attached to a NoteCollection with more than one child
+   */
+  isEach: boolean;
+} & (Tap | Hold | Touch | TouchHold);
 
 /**
  * Touches and touch holds. Slides are excluded from this category.
@@ -103,7 +108,7 @@ export type Hold = LanedNote & {
   duration: number;
 };
 
-// yeah i give up documenting these exported members, i'll do the rest later
+// yeah i give up documenting these, i'll do the rest later
 
 export type TapStyle = "circle" | "star" | "starStationary";
 

@@ -168,26 +168,30 @@ const parseNoteCol = (
   noteCol: Array<PT.Note>,
   state: State,
 ): AST.NoteCollection => ({
-  contents: noteCol.map(parseNote(state.bpm)),
+  contents: noteCol.map(parseNote(state.bpm, noteCol.length > 1)),
   time: state.time,
 });
 
 const parseNote =
-  (bpm: number) =>
-  (note: PT.Note): AST.Note => {
-    switch (note.type) {
-      case "tap":
-        return parseTap(note);
-      case "hold":
-        return parseHold(note, bpm);
-      case "slide":
-        return parseSlideTap(note);
-      case "touch":
-        return parseTouch(note);
-      case "touchHold":
-        return parseTouchHold(note, bpm);
-    }
-  };
+  (bpm: number, isEach: boolean) =>
+  (note: PT.Note): AST.Note => ({
+    // we have expressional switch at home - expressional switch at home:
+    ...(() => {
+      switch (note.type) {
+        case "tap":
+          return parseTap(note);
+        case "hold":
+          return parseHold(note, bpm);
+        case "slide":
+          return parseSlideTap(note);
+        case "touch":
+          return parseTouch(note);
+        case "touchHold":
+          return parseTouchHold(note, bpm);
+      }
+    })(),
+    isEach,
+  });
 
 const parseSlideTap = (slide: PT.Slide): AST.Tap => ({
   ...parseLaned(slide.ex, slide.brk, slide.loc),
