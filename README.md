@@ -1,3 +1,5 @@
+![mypassion](graphicdesignismypassion.png)
+
 # Simai Analyzer
 
 >Functional Simai file parser for Typescript - basically [sus analyzer](https://github.com/mizucoffee/sus-analyzer) for simai
