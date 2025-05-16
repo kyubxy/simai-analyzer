@@ -1,9 +1,9 @@
 # Simai Analyzer
 
+>Functional Simai file parser for Typescript - basically [sus analyzer](https://github.com/mizucoffee/sus-analyzer) for simai
+
 [![NPM Version](https://img.shields.io/npm/v/npm.svg?style=flat)](https://www.npmjs.com/package/simai-analyzer)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-
->Functional Simai file parser for Typescript - basically [sus analyzer](https://github.com/mizucoffee/sus-analyzer) for simai
 
 > [!WARNING]
 > This project is still relatively new and is not fully done yet.
