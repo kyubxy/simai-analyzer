@@ -3,6 +3,7 @@
 >Functional Simai file parser for Typescript - basically [sus analyzer](https://github.com/mizucoffee/sus-analyzer) for simai
 
 [![npm version](https://badge.fury.io/js/simai-analyzer.svg)](https://badge.fury.io/js/simai-analyzer)
+[![Node.js CI](https://github.com/kyubxy/simai-analyzer/actions/workflows/node.js.yml/badge.svg)](https://github.com/kyubxy/simai-analyzer/actions/workflows/node.js.yml)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
 
 > [!WARNING]
