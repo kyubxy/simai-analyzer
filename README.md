@@ -2,7 +2,7 @@
   <img src="graphicdesignismypassion.png" alt="graphic design is my passion" />
 </p>
 
-# Simai Analyzer Tools for Typescript
+<h1 align="center"> Simai Analyzer Tools for Typescript </h1>
 
 [![npm version](https://badge.fury.io/js/simai-analyzer.svg)](https://badge.fury.io/js/simai-analyzer)
 [![Node.js CI](https://github.com/kyubxy/simai-analyzer/actions/workflows/node.js.yml/badge.svg)](https://github.com/kyubxy/simai-analyzer/actions/workflows/node.js.yml)
