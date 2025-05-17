@@ -1,45 +1,36 @@
-export type ParseTree = {
-  chart: Array<Elem> | null;
+import { parse } from "../../lib/parser";
+import { pipe } from "fp-ts/function";
+import * as A from "fp-ts/Array";
+import * as E from "fp-ts/Either";
+
+export type Cell = {
+  bpm?: number;
+  div?: LenDef;
+  noteCol: Array<Note>;
 };
 
-export type Elem = {
-  bpm: number | null;
-  len: LenDef | null;
-  noteCol: Array<Note> | null;
-};
+// TODO: defining non terminal cells like this feels really backwards
+export type NonTerminalCell = Exclude<Cell, "E">;
 
-export type LenDef =
-  | {
-      type: "div";
-      val: number;
-    }
-  | {
-      type: "sec";
-      val: number;
-    };
+export type Note = Tap | Hold | Slide | Touch | TouchHold;
 
-export type Note = Tap | Hold | Touch | TouchHold | Slide;
-
+// TODO: support for forced stars
 export type Tap = {
   type: "tap";
-  loc: ButtonLoc;
-  brk: "b" | null;
-  ex: "x" | null;
-  star: "" | "$" | "$$";
+  location: ButtonLoc;
+  decorators: Array<Decorator>;
 };
 
 export type Hold = {
   type: "hold";
-  loc: ButtonLoc;
-  brk: "b" | null;
-  ex: "x" | null;
-  dur: LenHold;
+  location: ButtonLoc;
+  decorators: Array<Decorator>;
+  length: LenHold;
 };
 
 export type Slide = {
   type: "slide";
-  brk: "b" | null;
-  ex: "x" | null;
+  decorators: Array<Decorator>;
   loc: ButtonLoc;
   style: "" | "@" | "?" | "!";
   slidePaths: Array<SlideHead>;
@@ -47,14 +38,14 @@ export type Slide = {
 
 export type SlideHead =
   | {
-      type: "variable";
+      joinType: "variable";
       segments: Array<VariableSegment>;
     }
   | {
-      type: "constant";
+      joinType: "constant";
       segments: Array<ConstantSegment>;
       len: LenSlide;
-      brk: "b" | null;
+      brk: string;
     };
 
 export type ConstantSegment = {
@@ -66,7 +57,7 @@ export type VariableSegment = {
   slideType: SlideType;
   verts: Array<ButtonLoc>;
   len: LenSlide;
-  brk: "b" | null;
+  brk: string;
 };
 
 export type LenSlide =
@@ -115,6 +106,8 @@ export type SlideType =
   | "z"
   | "w";
 
+export type Decorator = "x" | "b" | "f";
+
 export type LenHold =
   | {
       type: "ratio";
@@ -130,22 +123,32 @@ export type LenHold =
       delay: number;
     };
 
-export type Ratio = {
-  div: number;
-  num: number;
-};
+export type LenDef =
+  | {
+      type: "div";
+      val: number;
+    }
+  | {
+      type: "sec";
+      val: number;
+    };
 
 export type Touch = {
   type: "touch";
-  loc: TouchLoc;
-  firework: "f" | null;
+  decorators: Array<Decorator>;
+  location: TouchLoc;
 };
 
 export type TouchHold = {
   type: "touchHold";
-  loc: TouchLoc;
-  firework: "f" | null;
-  len: LenHold;
+  decorators: Array<Decorator>;
+  location: TouchLoc;
+  length: LenHold;
+};
+
+export type Ratio = {
+  div: number;
+  num: number;
 };
 
 export type ButtonLoc = {
@@ -156,3 +159,32 @@ export type TouchLoc = {
   pos: number;
   frag: string;
 };
+
+export type ParseError = {
+  errorMsg: string;
+  cellId: number;
+};
+
+const preprocess = (chart: string) => chart.replace(/\s/g, "").split(",");
+
+/**
+ * Returns a list of eithers which resolve a cell represented as a parse tree
+ *
+ * @param chart A fragment of a chart
+ * @returns The list of eithers
+ */
+export const mapParse = (chart: string): Array<E.Either<ParseError, Cell>> =>
+  pipe(
+    chart,
+    preprocess,
+    A.takeLeftWhile((rawCell) => rawCell !== "E"),
+    A.mapWithIndex<string, E.Either<ParseError, Cell>>((cellId, cellImage) =>
+      E.tryCatch(
+        () => parse(cellImage) as Cell,
+        (e) => ({
+          cellId,
+          errorMsg: JSON.stringify(e),
+        }),
+      ),
+    ),
+  );

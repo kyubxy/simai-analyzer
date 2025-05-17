@@ -1,9 +1,14 @@
-import { Chart, Level, MaidataFile } from "./chart";
-import * as Notes from "./chart";
-import { genAbsyn } from "./deserialization/absyn";
-import { parse } from "../lib/parser";
+import * as A from "fp-ts/Array";
+import * as O from "fp-ts/Option";
+import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/lib/function";
-import { parseMaidata } from "./deserialization/maidataParser";
+import { Chart, MaidataFile } from "./chart";
+import * as Notes from "./chart";
+import { Cell, mapParse, ParseError } from "deserialization/parse";
+import { AbsynError, genAbsyn } from "deserialization/absyn";
+import { explode } from "deserialization/explode";
+import { partitionAndPreserveRights } from "fp/Array";
+import { parseMaidata } from "deserialization/maidataParser";
 
 export type LevelMetadata = {
   difficulty: string;
@@ -49,45 +54,104 @@ const defaultLevels: Array<LevelMetadata> = [
   },
 ];
 
+export type DeserializationError =
+  | ParseError
+  | AbsynError
+  | { message: string };
+
+export type DeserializationResult<T> = {
+  errors: Array<DeserializationError>;
+  data: T | null;
+};
+
 /**
  * Deserialize a single difficulty
- * @param data 
- * @returns 
+ * @param data
+ * @returns
  */
-export const deserializeSingle = (data: string): Chart =>
-  pipe(data, parse, genAbsyn);
+export const deserializeSingle = (data: string): DeserializationResult<Chart> =>
+  pipe(
+    data,
+    mapParse,
+    partitionAndPreserveRights<ParseError, Cell>(() => ({ noteCol: [] })),
+    ({ left, right }) => {
+      const soaChart = pipe(genAbsyn(right), E.map(explode));
+      return E.isRight(soaChart)
+        ? {
+            errors: left,
+            data: soaChart.right,
+          }
+        : {
+            errors: [...left, soaChart.left],
+            data: null,
+          };
+    },
+  );
 
 /**
  * Deserialize the entire file
- * @param maidata 
- * @param customLevels 
- * @returns 
+ * @param maidata
+ * @param customLevels
+ * @returns
  */
 export const deserialize = (
   maidata: string,
   customLevels?: Array<LevelMetadata>,
-): MaidataFile => {
-  const rawMaidata = parseMaidata(maidata);
-  return {
-    title: rawMaidata["title"],
-    artist: rawMaidata["artist"],
-    author: rawMaidata["des"],
-    offset: Number(rawMaidata["first"]),
-    levels: Object.fromEntries(
-      [...defaultLevels, ...(customLevels ?? [])].map(
-        ({ difficulty, chartKey, levelKey }) => [
-          difficulty,
-          {
-            level: levelKey in rawMaidata ? rawMaidata[levelKey] : undefined,
-            chart:
-              chartKey in rawMaidata
-                ? deserializeSingle(rawMaidata[chartKey])
-                : undefined,
-          } satisfies Level,
+): DeserializationResult<MaidataFile> => {
+  type Inter = {
+    errors: Array<DeserializationError>;
+    payload: {
+      difficulty: string;
+      levelNumber: string;
+      chart: Chart;
+    };
+  };
+  const raw = parseMaidata(maidata);
+  const title = raw["title"];
+  const artist = raw["artist"];
+  const author = raw["des"];
+  const offset = parseFloat(raw["first"]);
+  // we need to lift the errors out of the deserializeSingle call
+  const [errors, levels] = pipe(
+    [...defaultLevels, ...(customLevels ?? [])],
+    A.filterMap<LevelMetadata, Inter>(({ difficulty, chartKey, levelKey }) => {
+      const { errors, data: chart } = deserializeSingle(raw[chartKey]);
+      return chart === null
+        ? O.none
+        : O.some({
+            errors,
+            payload: { difficulty, chart, levelNumber: raw[levelKey] },
+          });
+    }),
+    A.reduce<
+      Inter,
+      [
+        Array<DeserializationError>,
+        Array<[string, { chart: Chart; level: string }]>,
+      ]
+    >([[], []], ([aErrors, aLevels], curr) => [
+      [...aErrors, ...curr.errors],
+      [
+        ...aLevels,
+        [
+          curr.payload.difficulty,
+          { chart: curr.payload.chart, level: curr.payload.levelNumber },
         ],
-      ),
-    ),
-    raw: rawMaidata,
+      ],
+    ]),
+    ([errors, levels]) => [errors, Object.fromEntries(levels)],
+  );
+  const data: MaidataFile = {
+    raw,
+    title,
+    artist,
+    author,
+    offset,
+    levels,
+  };
+  return {
+    errors,
+    data,
   };
 };
 
@@ -120,7 +184,7 @@ export const slideVisibleDuration = (slide: Notes.Slide): number =>
   );
 
 export const noteDuration = (note: Notes.Note) => {
-  switch(note.type) {
+  switch (note.type) {
     case "tap":
     case "touch":
       return 0;
@@ -128,12 +192,12 @@ export const noteDuration = (note: Notes.Note) => {
     case "touchHold":
       return note.duration;
   }
-}
+};
 
 /**
- * Gets the length of the longest hold in a note collection. 
- * @param noteCol 
- * @returns 
+ * Gets the length of the longest hold in a note collection.
+ * @param noteCol
+ * @returns
  */
 export const maxHoldDuration = (noteCol: Notes.NoteCollection) =>
   noteCol.contents

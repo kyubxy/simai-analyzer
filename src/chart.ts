@@ -29,9 +29,9 @@ export type Level = {
  * rendered by different systems.
  */
 export type Chart = {
-  noteCollections: ReadonlyArray<NoteCollection>;
-  slides: ReadonlyArray<Slide>;
-  timing: ReadonlyArray<TimingMarker>;
+  noteCollections: Array<NoteCollection>;
+  slides: Array<Slide>;
+  timing: Array<TimingMarker>;
 };
 
 /**

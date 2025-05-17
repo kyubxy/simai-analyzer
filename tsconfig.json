@@ -5,8 +5,11 @@
     "declaration": true,
     "outDir": "./dist",
     "baseUrl": "src",
+    "paths": {
+      "@lib/*": ["../lib/*"]
+    }
   },
   "include": [
     "src/**/*"
-  ]
+  ],
 }
