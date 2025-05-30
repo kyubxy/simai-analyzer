@@ -1,0 +1,183 @@
+@startuml
+
+'Courtesy of chatgpt'
+
+'=== Enums and Primitives ==='
+enum TapStyle {
+  circle
+  star
+  starStationary
+}
+
+enum SensorRegion {
+  A
+  B
+  C
+  D
+  E
+}
+
+enum SlideType {
+  straight
+  shortArc
+  vShape
+  cClockwise
+  clockwise
+  grandV
+  pShape
+  qShape
+  ppShape
+  qqShape
+  sShape
+  zShape
+  fan
+}
+
+class Button {
+  0..7
+}
+
+'=== Decorators ==='
+class NoteDecorator {
+  +boolean ex
+  +boolean break
+}
+
+class TouchDecorator {
+  +boolean hanabi
+}
+
+'=== Base Types ==='
+class RawMaidata {
+  +[key: string]: string
+}
+
+class MaidataFile {
+  +title: string
+  +artist: string
+  +author: string
+  +offset: number
+  +levels: Map<string, Level>
+  +raw: RawMaidata
+}
+
+class Level {
+  +chart?: Chart
+  +level?: string
+}
+
+class Chart {
+  +noteCollections: NoteCollection[]
+  +slides: Slide[]
+  +timing: TimingMarker[]
+}
+
+class TimingMarker {
+  +time: number
+  +bpm: number
+}
+
+class NoteCollection {
+  +contents: Note[]
+  +slides?: Slide[]
+  +time: number
+}
+
+class Note {
+  <<abstract>>
+}
+
+class NoteCollectionChild {
+  +parent: NoteCollection
+}
+
+'=== Touch Notes ==='
+class UnlanedNote {
+  +location: Sensor
+  +decorators: TouchDecorator
+}
+
+class Touch {
+  +type: "touch"
+}
+
+class TouchHold {
+  +type: "touchHold"
+  +duration: number
+}
+
+'=== Laned Notes ==='
+class LanedNote {
+  +decorators: NoteDecorator
+  +location: Button
+}
+
+class Tap {
+  +type: "tap"
+  +style: TapStyle
+}
+
+class Hold {
+  +type: "hold"
+  +duration: number
+}
+
+'=== Slide ==='
+class Slide {
+  +time: number
+  +paths: SlidePath[]
+  +noteCol?: NoteCollection
+}
+
+class SlidePath {
+  +delay: number
+  +slideSegments: SlideSegment[]
+  +decorators: NoteDecorator
+}
+
+class SlideSegment {
+  +type: SlideType
+  +duration: number
+  +vertices: Button[] (2 or 3)
+}
+
+class Sensor {
+  +index: Button
+  +area: SensorRegion
+}
+
+'=== Inheritance and Relations ==='
+MaidataFile --> RawMaidata
+MaidataFile --> "Map<string>" Level
+Level --> Chart
+Chart --> NoteCollection
+Chart --> Slide
+Chart --> TimingMarker
+NoteCollection --> Note
+NoteCollection --> Slide
+Note <|-- Tap
+Note <|-- Hold
+Note <|-- Touch
+Note <|-- TouchHold
+Tap --|> LanedNote
+Hold --|> LanedNote
+Touch --|> UnlanedNote
+TouchHold --|> UnlanedNote
+LanedNote --|> NoteCollectionChild
+UnlanedNote --|> NoteCollectionChild
+NoteCollectionChild --> NoteCollection
+UnlanedNote --> Sensor
+UnlanedNote --> TouchDecorator
+LanedNote --> NoteDecorator
+LanedNote --> Button
+Tap --> TapStyle
+Slide --> SlidePath
+Slide --> NoteCollection
+SlidePath --> SlideSegment
+SlidePath --> NoteDecorator
+SlideSegment --> Button
+SlideSegment --> SlideType
+Sensor --> Button
+Sensor --> SensorRegion
+
+@enduml

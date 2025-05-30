@@ -51,6 +51,8 @@ const { errors, chart: master } = deserializeSingle(data);
 doStuffWith(master.noteCollections)
 ```
 
+See [the parse type UML diagram](https://github.com/kyubxy/simai-analyzer/wiki/Parse-type-UML-diagram) for more details on the deserialisation output.
+
 ## About
 
 Introducing a reliable and correct simai deserializer for
