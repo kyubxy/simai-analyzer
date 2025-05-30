@@ -70,7 +70,7 @@ export type DeserializationError =
 
 export type DeserializationResult<T> = {
   errors: Array<DeserializationError>;
-  data: T | null;
+  chart: T | null;
 };
 
 /**
@@ -89,11 +89,11 @@ export const deserializeSingle = (data: string): DeserializationResult<Chart> =>
       return E.isRight(soaChart)
         ? {
             errors: left,
-            data: soaChart.right,
+            chart: soaChart.right,
           }
         : {
             errors: [...left, soaChart.left],
-            data: null,
+            chart: null,
           };
     },
   );
@@ -104,7 +104,7 @@ export const deserializeSingle = (data: string): DeserializationResult<Chart> =>
  * @param customLevels
  * @returns
  */
-export const deserialize = (
+export const deserializeMaidata = (
   maidata: NonNullable<string>,
   customLevels?: Array<LevelMetadata>,
 ): DeserializationResult<MaidataFile> => {
@@ -127,7 +127,7 @@ export const deserialize = (
     A.filterMap<LevelMetadata, Inter>(({ difficulty, chartKey, levelKey }) => {
       const c = raw[chartKey];
       if (c === undefined) return O.none;
-      const { errors, data: chart } = deserializeSingle(c);
+      const { errors, chart: chart } = deserializeSingle(c);
       return chart === null
         ? O.none
         : O.some({
@@ -163,7 +163,7 @@ export const deserialize = (
   };
   return {
     errors,
-    data,
+    chart: data,
   };
 };
 

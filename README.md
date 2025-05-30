@@ -32,13 +32,13 @@ npm i simai-analyzer
 ```ts
 import { deserializeMaidata } from "simai-analyzer/simai";
 
-const data = `
+const file = `
 &title=(the start of) Fragrance
 &artist=Tsukasa(Arte Refact)
 &wholebpm=180
 &inote_5=(180.0){1},{8}3,2,1,,3,4,,6,{8}5,,7,8,,{57}2,,,,,,,E`;
-const chart = deserializeMaidata(data);
-console.log(chart.levels["master"].noteCollections)
+const { errors, chart } = deserializeMaidata(file);
+doStuffWith(chart.levels[difficulty.master].noteCollections)
 ```
 
 **Deserialize a single difficulty:**
@@ -47,8 +47,8 @@ console.log(chart.levels["master"].noteCollections)
 import { deserializeLevel } from "simai-analyzer/simai";
 
 const data = `(180.0){1},{8}3,2,1,,3,4,,6,{8}5,,7,8,,{57}2,,,,,,,E`;
-const master = deserializeLevel(data);
-console.log(master.noteCollections)
+const master = deserializeSingle(data);
+doStuffWith(master.noteCollections)
 ```
 
 ## About
@@ -62,14 +62,14 @@ This parser has a few good things going for it which should make the lives of
 developers and players easier.
 
 - A fault tolerant system. Malformed charts still partially come
-through without just throwing errors.
+through without just giving up and throwing errors.
 - Entirely functional, typed and well-tested code
 - Robust and clearly defined syntax parsing with Peggy.js
 - A stronger emphasis on correctness over performance
 - Sane API structure
 - Active support
 
-**What Simai Analyzer currently isn't**
+**What Simai Analyzer currently is not**
 
 - Fully AstroDX compatible (but should work in 99% of use-cases)
 - Fully MajData/3Simai compatible
@@ -111,9 +111,9 @@ of doing tests.
 
 ## Contributing
 
-Feel free to raise issues or submit PRs in any format, I don't have any strict templates or requirements for people to follow in order to contribute.
+Feel free to raise issues or submit PRs in any format.
 
-If you're going to raise an issue, describe the bug in as much detail as you can, I will ignore or close the really vague ones.
+If you're going to raise an issue, describe the bug in as much detail as you can.
 
 Try to follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) style of writing commit messages.
 

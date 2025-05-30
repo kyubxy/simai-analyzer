@@ -4,7 +4,7 @@ import { grievousLady } from "./chartData/grievousLady";
 import { lowercaseLifetimeMaidata } from "./chartData/lowercaseLifetimeMaidata";
 
 import { parseMaidata } from "../src/deserialization/maidataParser";
-import { deserialize, deserializeSingle, difficulties } from "../src/simai";
+import { deserialize, deserializeMaidata, deserializeSingle, difficulties } from "../src/simai";
 
 describe("deserialization", () => {
   it.each([
@@ -50,13 +50,13 @@ E4/8,,7/B3,7,B2,6,E2,6,E4,5,B3,5,B2/5,5,6/E2,6,
   });
 
   it("deserializes the entire chart data", () => {
-    const chart = lowercaseLifetimeMaidata;
-    const { data } = deserialize(chart);
+    const data = lowercaseLifetimeMaidata;
+    const { chart } = deserializeMaidata(data);
     expect(data).not.toBeNull();
-    expect(data!.title).toBe("lowercase lifetime");
-    expect(data!.artist).toBe("ZAQUVA");
-    expect(data!.offset).toBe(2.54);
-    expect(data!.author).toBe("kyubey");
-    expect(data!.levels[difficulties.master].level).toBe("14");
+    expect(chart!.title).toBe("lowercase lifetime");
+    expect(chart!.artist).toBe("ZAQUVA");
+    expect(chart!.offset).toBe(2.54);
+    expect(chart!.author).toBe("kyubey");
+    expect(chart!.levels[difficulties.master].level).toBe("14");
   });
 });
