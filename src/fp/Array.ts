@@ -2,7 +2,7 @@ import * as E from "fp-ts/Either";
 import * as S from "fp-ts/Separated";
 
 /**
- * Partitions a list of eithers, preserving the "structure" of the list of `as` and moving them to
+ * Partitions a list of eithers, preserving the "structure" of the list of `as` and moving lefts to
  * a separate list of `bs`
  *
  * Example:

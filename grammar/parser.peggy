@@ -31,7 +31,7 @@ slide
     	return {
         	type:"slide",
             decorators: d,
-            loc: loc,
+            location: loc,
             style: style,
             slidePaths: [part, ...parts]
         }
@@ -67,11 +67,11 @@ touchHoldDecorators = d1:$"f"? "h" d2:$"f"? {
   return [(d1||d2)]
 }
 
-hold = l:buttonLoc  d:holdDecorators len:lenHold {
+hold = l:buttonLoc  d:holdDecorators len:lenHold d2:decorators {
   return {
     type: "hold",
     location: l,
-    decorators: d,
+    decorators: [...new Set([...d, ...d2])],
     length: len
   }
 }
@@ -111,7 +111,7 @@ touchLoc
 	= f:[A-B|D-E] i:[1-8] {return {pos: i, frag: f}} / "C" i:[1-3]? "x"? {return {pos: i, frag:"C"}}
     
 buttonLoc
-	= l:[1-8] {return parseInt(l)}
+	= l:[1-8] {return {button: parseInt(l)}}
     
 number = float / integer
 

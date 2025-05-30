@@ -1,3 +1,6 @@
+import { pipe } from "fp-ts/function";
+import * as A from "fp-ts/Array";
+
 /**
  * A raw key-value representation of the parsed maidata.txt
  */
@@ -48,6 +51,7 @@ export type TimingMarker = {
  */
 export type NoteCollection = {
   contents: Array<Note>;
+  slides?: Array<Slide>;
   time: number;
 };
 
@@ -56,10 +60,14 @@ export type NoteCollection = {
  */
 export type Note = Tap | Hold | Touch | TouchHold;
 
+type NoteCollectionChild = {
+  parent: NoteCollection;
+};
+
 /**
  * Touches and touch holds. Slides are excluded from this category.
  */
-export type UnlanedNote = {
+export type UnlanedNote = NoteCollectionChild & {
   location: Sensor;
   decorators: TouchDecorator;
 };
@@ -82,7 +90,7 @@ export type TouchHold = UnlanedNote & {
 /**
  * Anything that is fixed to a lane.
  */
-export type LanedNote = {
+export type LanedNote = NoteCollectionChild & {
   decorators: NoteDecorator;
   location: Button;
 };
@@ -110,6 +118,7 @@ export type TapStyle = "circle" | "star" | "starStationary";
 export type Slide = {
   time: number;
   paths: Array<SlidePath>;
+  noteCol?: NoteCollection;
 };
 
 export type SlidePath = {
@@ -153,3 +162,52 @@ export type SlideType =
   | "sShape"
   | "zShape"
   | "fan";
+
+export const noteDuration = (note: Note) =>
+  pipe(() => {
+    switch (note.type) {
+      case "tap":
+      case "touch":
+        return 0;
+      case "hold":
+      case "touchHold":
+        return note.duration;
+    }
+  });
+
+/**
+ * Given a full slide path, computes the total duration of the longest
+ * slide path. The longest duration is the sum of that path's initial delay
+ * and the time taken to complete the slide body.
+ *
+ * @param slide The slide to process
+ * @returns The length in seconds of the longest path in the slide.
+ */
+// TODO: test this
+export const slideVisibleDuration = (slide: Slide): number =>
+  pipe(
+    slide.paths,
+    A.reduce<SlidePath, number>(0, (maxPathDuration, path) =>
+      Math.max(
+        maxPathDuration,
+        path.slideSegments.reduce<number>(
+          (maxSegmentDuration, segment) =>
+            Math.max(maxSegmentDuration, segment.duration),
+          0,
+        ) + path.delay,
+      ),
+    ),
+  );
+
+/**
+ * Gets the length of the longest hold in a note collection.
+ * @param noteCol
+ * @returns
+ */
+export const maxHoldDuration = (noteCol: NoteCollection) =>
+  pipe(
+    noteCol.contents,
+    A.filter(({ type }) => type === "hold" || type === "touchHold"),
+    A.map((n) => (n as Hold | TouchHold).duration),
+    A.reduce(0, (acc, curr) => Math.max(acc, curr)),
+  );

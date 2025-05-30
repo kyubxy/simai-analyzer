@@ -1,4 +1,4 @@
-import { parseMaidata } from "../../src/deserialization2/maidataParser";
+import { parseMaidata } from "../../src/deserialization/maidataParser";
 
 describe("maidata parser", () => {
   it.each([

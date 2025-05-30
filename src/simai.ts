@@ -3,12 +3,11 @@ import * as O from "fp-ts/Option";
 import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/lib/function";
 import { Chart, MaidataFile } from "./chart";
-import * as Notes from "./chart";
-import { Cell, mapParse, ParseError } from "deserialization/parse";
-import { AbsynError, genAbsyn } from "deserialization/absyn";
-import { explode } from "deserialization/explode";
-import { partitionAndPreserveRights } from "fp/Array";
-import { parseMaidata } from "deserialization/maidataParser";
+import { AbsynError, genAbsyn } from "./deserialization/absyn";
+import { link } from "./deserialization/linker";
+import { partitionAndPreserveRights } from "./fp/Array";
+import { parseMaidata } from "./deserialization/maidataParser";
+import { Cell, mapParse, ParseError } from "./deserialization/parse";
 
 export type LevelMetadata = {
   difficulty: string;
@@ -16,39 +15,49 @@ export type LevelMetadata = {
   levelKey: string;
 };
 
+export const difficulties = {
+  original: "original",
+  remaster: "remaster",
+  master: "master",
+  expert: "expert",
+  advanced: "advanced",
+  basic: "basic",
+  easy: "easy",
+} as const;
+
 const defaultLevels: Array<LevelMetadata> = [
   {
-    difficulty: "easy",
+    difficulty: difficulties.easy,
     chartKey: "inote_1",
     levelKey: "lv_1",
   },
   {
-    difficulty: "basic",
+    difficulty: difficulties.basic,
     chartKey: "inote_2",
     levelKey: "lv_2",
   },
   {
-    difficulty: "advanced",
+    difficulty: difficulties.advanced,
     chartKey: "inote_3",
     levelKey: "lv_3",
   },
   {
-    difficulty: "expert",
+    difficulty: difficulties.expert,
     chartKey: "inote_4",
     levelKey: "lv_4",
   },
   {
-    difficulty: "master",
+    difficulty: difficulties.master,
     chartKey: "inote_5",
     levelKey: "lv_5",
   },
   {
-    difficulty: "remaster",
+    difficulty: difficulties.remaster,
     chartKey: "inote_6",
     levelKey: "lv_6",
   },
   {
-    difficulty: "original",
+    difficulty: difficulties.original,
     chartKey: "inote_7",
     levelKey: "lv_7",
   },
@@ -75,7 +84,8 @@ export const deserializeSingle = (data: string): DeserializationResult<Chart> =>
     mapParse,
     partitionAndPreserveRights<ParseError, Cell>(() => ({ noteCol: [] })),
     ({ left, right }) => {
-      const soaChart = pipe(genAbsyn(right), E.map(explode));
+      const a = genAbsyn(right)
+      const soaChart = pipe(a, E.map(link));
       return E.isRight(soaChart)
         ? {
             errors: left,
@@ -95,7 +105,7 @@ export const deserializeSingle = (data: string): DeserializationResult<Chart> =>
  * @returns
  */
 export const deserialize = (
-  maidata: string,
+  maidata: NonNullable<string>,
   customLevels?: Array<LevelMetadata>,
 ): DeserializationResult<MaidataFile> => {
   type Inter = {
@@ -115,7 +125,9 @@ export const deserialize = (
   const [errors, levels] = pipe(
     [...defaultLevels, ...(customLevels ?? [])],
     A.filterMap<LevelMetadata, Inter>(({ difficulty, chartKey, levelKey }) => {
-      const { errors, data: chart } = deserializeSingle(raw[chartKey]);
+      const c = raw[chartKey];
+      if (c === undefined) return O.none;
+      const { errors, data: chart } = deserializeSingle(c);
       return chart === null
         ? O.none
         : O.some({
@@ -159,48 +171,3 @@ export const deserialize = (
 export const serialize = (chart: MaidataFile): string => {
   throw new Error("Not implemented yet.");
 };
-
-/**
- * Given a full slide path, computes the total duration of the longest
- * slide path. The longest duration is the sum of that path's initial delay
- * and the time taken to complete the slide body.
- *
- * @param slide The slide to process
- * @returns The length in seconds of the longest path in the slide.
- */
-// TODO: test this
-export const slideVisibleDuration = (slide: Notes.Slide): number =>
-  slide.paths.reduce<number>(
-    (maxPathDuration, path) =>
-      Math.max(
-        maxPathDuration,
-        path.slideSegments.reduce<number>(
-          (maxSegmentDuration, segment) =>
-            Math.max(maxSegmentDuration, segment.duration),
-          0,
-        ) + path.delay,
-      ),
-    0,
-  );
-
-export const noteDuration = (note: Notes.Note) => {
-  switch (note.type) {
-    case "tap":
-    case "touch":
-      return 0;
-    case "hold":
-    case "touchHold":
-      return note.duration;
-  }
-};
-
-/**
- * Gets the length of the longest hold in a note collection.
- * @param noteCol
- * @returns
- */
-export const maxHoldDuration = (noteCol: Notes.NoteCollection) =>
-  noteCol.contents
-    .filter(({ type }) => type === "hold" || type === "touchHold")
-    .map((n) => (n as Notes.Hold | Notes.TouchHold).duration)
-    .reduce((acc, curr) => Math.max(acc, curr), 0);

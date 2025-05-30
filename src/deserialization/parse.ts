@@ -9,9 +9,6 @@ export type Cell = {
   noteCol: Array<Note>;
 };
 
-// TODO: defining non terminal cells like this feels really backwards
-export type NonTerminalCell = Exclude<Cell, "E">;
-
 export type Note = Tap | Hold | Slide | Touch | TouchHold;
 
 // TODO: support for forced stars
@@ -31,7 +28,7 @@ export type Hold = {
 export type Slide = {
   type: "slide";
   decorators: Array<Decorator>;
-  loc: ButtonLoc;
+  location: ButtonLoc;
   style: "" | "@" | "?" | "!";
   slidePaths: Array<SlideHead>;
 };
@@ -48,14 +45,14 @@ export type SlideHead =
       brk: string;
     };
 
-export type ConstantSegment = {
+export type SlideSegment = {
   slideType: SlideType;
-  verts: Array<ButtonLoc>;
+  tailVerts: Array<ButtonLoc>;
 };
 
-export type VariableSegment = {
-  slideType: SlideType;
-  verts: Array<ButtonLoc>;
+export type ConstantSegment = SlideSegment;
+
+export type VariableSegment = SlideSegment & {
   len: LenSlide;
   brk: string;
 };
@@ -104,7 +101,8 @@ export type SlideType =
   | "v"
   | "s"
   | "z"
-  | "w";
+  | "w"
+  | "V";
 
 export type Decorator = "x" | "b" | "f";
 
@@ -162,6 +160,7 @@ export type TouchLoc = {
 
 export type ParseError = {
   errorMsg: string;
+  image: string;
   cellId: number;
 };
 
@@ -180,9 +179,12 @@ export const mapParse = (chart: string): Array<E.Either<ParseError, Cell>> =>
     A.takeLeftWhile((rawCell) => rawCell !== "E"),
     A.mapWithIndex<string, E.Either<ParseError, Cell>>((cellId, cellImage) =>
       E.tryCatch(
-        () => parse(cellImage) as Cell,
+        () => {
+          return parse(cellImage) as Cell;
+        },
         (e) => ({
           cellId,
+          image: cellImage,
           errorMsg: JSON.stringify(e),
         }),
       ),

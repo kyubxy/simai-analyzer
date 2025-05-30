@@ -109,7 +109,7 @@ export const genAbsyn = (
       pipe(
         cells,
         A.reduce<PT.Cell, [AoSChart, State]>(
-          [[], { time: 0, bpm: null, div: { type: "div", val: 4 } }],
+          [[], { time: 0, bpm: null, div: { type: "div", val: 4 } }], // assume a starting value of {4}
           ([pCellAcc, currentState], cell) => {
             const [parsedCell, parsedState] = parseCell(cell, currentState);
             return [[...pCellAcc, parsedCell], parsedState];
@@ -124,7 +124,7 @@ export const genAbsyn = (
 };
 
 const parseCell = (
-  cell: PT.NonTerminalCell,
+  cell: PT.Cell,
   state: State,
 ): [ParsedCell, State] => {
   const internalState = {
@@ -193,27 +193,37 @@ const parseNote =
     }
   };
 
+// Temporary parent value
+const deferResolve: AST.NoteCollection = {
+  contents: [],
+  time: 0,
+};
+
 const parseSlideTap = (slide: PT.Slide): AST.Tap => ({
-  ...parseLaned(slide.decorators, slide.loc),
+  ...parseLaned(slide.decorators, slide.location),
   style: "star",
   type: "tap",
+  parent: deferResolve,
 });
 
 const parseTap = (tap: PT.Tap): AST.Tap => ({
   ...parseLaned(tap.decorators, tap.location),
   style: "circle", // TODO: support for forced stars
   type: "tap",
+  parent: deferResolve,
 });
 
 const parseHold = (hold: PT.Hold, bpm: number): AST.Hold => ({
   ...parseLaned(hold.decorators, hold.location),
   duration: parseLenHold(hold.length, bpm),
   type: "hold",
+  parent: deferResolve,
 });
 
 const parseTouch = (touch: PT.Touch): AST.Touch => ({
   ...parseUnlaned(touch.decorators, touch.location),
   type: "touch",
+  parent: deferResolve,
 });
 
 const parseTouchHold = (
@@ -223,6 +233,7 @@ const parseTouchHold = (
   ...parseUnlaned(touchHold.decorators, touchHold.location),
   duration: parseLenHold(touchHold.length, bpm),
   type: "touchHold",
+  parent: deferResolve,
 });
 
 const parseLaned = (
@@ -275,7 +286,7 @@ const parseSlides = (
     A.filter((x) => x.type === "slide"),
     A.map((slide) => ({
       time,
-      paths: slide.slidePaths.map(parseSlidePath(slide.loc, bpm)),
+      paths: slide.slidePaths.map(parseSlidePath(slide.location, bpm)),
     })),
   );
 
@@ -323,10 +334,10 @@ const parseVertices = (
 
 const partialSegmentNoDuration = (
   head: PT.ButtonLoc,
-  second: PT.ConstantSegment,
+  second: PT.SlideSegment,
 ) => ({
   type: parseSlideType(second.slideType),
-  vertices: parseVertices([head, ...second.verts]),
+  vertices: parseVertices([head, ...second.tailVerts]),
 });
 
 /**
@@ -349,7 +360,7 @@ const generateSegmentsConstant = (
           duration,
         },
         ...generateSegmentsConstant(
-          tail.at(0).verts.at(-1),
+          tail.at(0).tailVerts.at(-1),
           tail.slice(1),
           duration / tail.length,
         ),
@@ -375,7 +386,7 @@ const generateSegmentsVariable = (
           duration: parseLenSlide(tail.at(0).len, bpm).length,
         },
         ...generateSegmentsVariable(
-          tail.at(0).verts.at(-1),
+          tail.at(0).tailVerts.at(-1),
           tail.slice(1),
           bpm,
         ),
