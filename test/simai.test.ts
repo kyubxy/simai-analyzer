@@ -4,7 +4,11 @@ import { grievousLady } from "./chartData/grievousLady";
 import { lowercaseLifetimeMaidata } from "./chartData/lowercaseLifetimeMaidata";
 
 import { parseMaidata } from "../src/deserialization/maidataParser";
-import { deserialize, deserializeMaidata, deserializeSingle, difficulties } from "../src/simai";
+import {
+  deserializeMaidata,
+  deserializeSingle,
+  difficulties,
+} from "../src/simai";
 
 describe("deserialization", () => {
   it.each([

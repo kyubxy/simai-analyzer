@@ -47,7 +47,7 @@ doStuffWith(chart.levels[difficulty.master].noteCollections)
 import { deserializeLevel } from "simai-analyzer/simai";
 
 const data = `(180.0){1},{8}3,2,1,,3,4,,6,{8}5,,7,8,,{57}2,,,,,,,E`;
-const master = deserializeSingle(data);
+const { errors, chart: master } = deserializeSingle(data);
 doStuffWith(master.noteCollections)
 ```
 
