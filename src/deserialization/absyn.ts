@@ -2,7 +2,14 @@ import * as PT from "./parse";
 import * as AST from "../chart";
 import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
+import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/lib/function";
+
+export class AbsynError extends Error {
+  constructor(message?: string) {
+    super(message);
+  }
+}
 
 const parseSlideType = (slideType: PT.SlideType): AST.SlideType => {
   const result = {
@@ -21,14 +28,14 @@ const parseSlideType = (slideType: PT.SlideType): AST.SlideType => {
     V: "grandV",
   }[slideType] as AST.SlideType;
 
-  if (result === undefined) throw new Error("Unidentified slide type");
+  if (result === undefined) throw new AbsynError("Unidentified slide type");
 
   return result;
 };
 
 const parseButton = (loc: PT.ButtonLoc): AST.Button => {
   const b = loc.button;
-  if (b < 1 || b > 8) throw new Error(`Invalid button [${b}].`);
+  if (b < 1 || b > 8) throw new AbsynError(`Invalid button [${b}].`);
   return (b - 1) as AST.Button; // buttons inside the parsing framework are zero-indexed
 };
 
@@ -36,20 +43,20 @@ const parseSensor = (sens: PT.TouchLoc): AST.Sensor => {
   if (sens.frag === "C") sens.pos ??= 1; // No one actually uses the Cn syntax and just writes C for the sensor.
   if (["A", "B", "D", "E"].includes(sens.frag)) {
     if (sens.pos < 1 || sens.pos > 8)
-      throw new Error(`Invalid sensor [${sens.frag}${sens.pos}]`);
+      throw new AbsynError(`Invalid sensor [${sens.frag}${sens.pos}]`);
     return {
       index: (sens.pos - 1) as AST.Button,
       area: sens.frag as AST.SensorRegion,
     };
   } else if (sens.frag === "C") {
     if (sens.pos < 1 || sens.pos > 3)
-      throw new Error(`Invalid sensor [${sens.frag}${sens.pos}]`);
+      throw new AbsynError(`Invalid sensor [${sens.frag}${sens.pos}]`);
     return {
       index: (sens.pos - 1) as AST.Button,
       area: sens.frag as AST.SensorRegion,
     };
   } else {
-    throw new Error(
+    throw new AbsynError(
       `Invalid sensor area [${sens.frag}] in [${sens.frag}${sens.pos}]`,
     );
   }
@@ -65,12 +72,10 @@ const getTimeDelta = (bpm: number, div: PT.LenDef): number => {
 };
 
 function unquantise(divisions: number, num: number, bpm: number): number {
-  // TODO: I think io-ts-types gives access to "branded" types that can
-  // delegate these guards to type checks.
-  if (divisions === 0) throw new Error("division cannot be 0");
-  if (bpm === 0) throw new Error("bpm cannot be 0");
-  if (divisions < 0) throw new Error("division must be greater than 0");
-  if (bpm < 0) throw new Error("bpm must be greater than 0");
+  if (divisions === 0) throw new AbsynError("division cannot be 0");
+  if (bpm === 0) throw new AbsynError("bpm cannot be 0");
+  if (divisions < 0) throw new AbsynError("division must be greater than 0");
+  if (bpm < 0) throw new AbsynError("bpm must be greater than 0");
   return (60 / bpm) * (4 / divisions) * num;
 }
 
@@ -82,73 +87,72 @@ type State = {
   div: PT.LenDef;
 };
 
-type Composite = {
-  noteCollections: O.Option<AST.NoteCollection>;
+export type ParsedCell = {
+  noteCollection: O.Option<AST.NoteCollection>;
   timing: O.Option<AST.TimingMarker>;
-  slides: ReadonlyArray<AST.Slide>;
+  slides: Array<AST.Slide>;
 };
 
-export const genAbsyn = (tree: PT.ParseTree): AST.Chart =>
-  pipe(
-    tree.chart ?? [],
-    A.reduce<PT.Elem, [AST.Chart, State]>(
-      [
-        { noteCollections: [], timing: [], slides: [] },
-        { time: 0, bpm: null, div: { type: "div", val: 4 } },
-      ],
-      ([chartSlice, currentState], elem) => {
-        const [parsedComposite, parsedState] = parseElem(elem, currentState);
-        return [
-          {
-            noteCollections: pipe(
-              parsedComposite.noteCollections,
-              O.fold(
-                () => chartSlice.noteCollections,
-                (noteCol) => [...chartSlice.noteCollections, noteCol],
-              ),
-            ),
-            timing: pipe(
-              parsedComposite.timing,
-              O.fold(
-                () => chartSlice.timing,
-                (timingMarker) => [...chartSlice.timing, timingMarker],
-              ),
-            ),
-            slides: [...chartSlice.slides, ...parsedComposite.slides],
-          },
-          parsedState,
-        ];
-      },
-    ),
-  )[0];
+export type AoSChart = Array<ParsedCell>;
 
-const parseElem = (elem: PT.Elem, state: State): [Composite, State] => {
+/**
+ * Generates the chart as a AoS
+ *
+ * @param cells
+ * @returns
+ */
+export const genAbsyn = (
+  cells: Array<PT.Cell>,
+): E.Either<AbsynError, AoSChart> => {
+  try {
+    return E.right(
+      pipe(
+        cells,
+        A.reduce<PT.Cell, [AoSChart, State]>(
+          [[], { time: 0, bpm: null, div: { type: "div", val: 4 } }], // assume a starting value of {4}
+          ([pCellAcc, currentState], cell) => {
+            const [parsedCell, parsedState] = parseCell(cell, currentState);
+            return [[...pCellAcc, parsedCell], parsedState];
+          },
+        ),
+        ([chart, _]) => chart,
+      ),
+    );
+  } catch (error) {
+    return E.left(error);
+  }
+};
+
+const parseCell = (
+  cell: PT.Cell,
+  state: State,
+): [ParsedCell, State] => {
   const internalState = {
-    bpm: elem.bpm ?? state.bpm,
-    div: elem.len ?? state.div,
+    bpm: cell.bpm ?? state.bpm,
+    div: cell.div ?? state.div,
     time: state.time,
   };
 
   if (internalState.bpm === null) {
-    throw new Error("BPM was null.");
+    throw new AbsynError("BPM was null.");
   }
 
   return [
-    // Composite
+    // ParsedCell
     {
-      noteCollections: pipe(
-        O.fromNullable(elem.noteCol),
+      noteCollection: pipe(
+        O.fromNullable(cell.noteCol),
         O.map((noteCol) => parseNoteCol(noteCol, internalState)),
       ),
       timing: pipe(
-        O.fromNullable(elem.bpm),
+        O.fromNullable(cell.bpm),
         O.map((bpm) => ({
           time: internalState.time,
           bpm,
         })),
       ),
       slides: pipe(
-        O.fromNullable(elem.noteCol),
+        O.fromNullable(cell.noteCol),
         O.fold(
           () => [],
           (noteCol) =>
@@ -189,50 +193,66 @@ const parseNote =
     }
   };
 
+// Temporary parent value
+const deferResolve: AST.NoteCollection = {
+  contents: [],
+  time: 0,
+};
+
 const parseSlideTap = (slide: PT.Slide): AST.Tap => ({
-  ...parseLaned(slide.ex, slide.brk, slide.loc),
+  ...parseLaned(slide.decorators, slide.location),
   style: "star",
   type: "tap",
+  parent: deferResolve,
 });
 
 const parseTap = (tap: PT.Tap): AST.Tap => ({
-  ...parseLaned(tap.ex, tap.brk, tap.loc),
-  style:
-    tap.star === "" ? "circle" : tap.star === "$" ? "star" : "starStationary",
+  ...parseLaned(tap.decorators, tap.location),
+  style: "circle", // TODO: support for forced stars
   type: "tap",
+  parent: deferResolve,
 });
 
 const parseHold = (hold: PT.Hold, bpm: number): AST.Hold => ({
-  ...parseLaned(hold.ex, hold.brk, hold.loc),
-  duration: parseLenHold(hold.dur, bpm),
+  ...parseLaned(hold.decorators, hold.location),
+  duration: parseLenHold(hold.length, bpm),
   type: "hold",
+  parent: deferResolve,
 });
 
 const parseTouch = (touch: PT.Touch): AST.Touch => ({
-  ...parseUnlaned(touch.firework, touch.loc),
+  ...parseUnlaned(touch.decorators, touch.location),
   type: "touch",
+  parent: deferResolve,
 });
 
 const parseTouchHold = (
   touchHold: PT.TouchHold,
   bpm: number,
 ): AST.TouchHold => ({
-  ...parseUnlaned(touchHold.firework, touchHold.loc),
-  duration: parseLenHold(touchHold.len, bpm),
+  ...parseUnlaned(touchHold.decorators, touchHold.location),
+  duration: parseLenHold(touchHold.length, bpm),
   type: "touchHold",
+  parent: deferResolve,
 });
 
-const parseLaned = (ex: "x" | null, brk: "b" | null, loc: PT.ButtonLoc) => ({
+const parseLaned = (
+  decorators: Array<PT.Decorator>,
+  loc: PT.ButtonLoc,
+): { decorators: { ex: boolean; break: boolean }; location: AST.Button } => ({
   decorators: {
-    ex: ex === "x",
-    break: brk === "b",
+    ex: decorators.includes("x"),
+    break: decorators.includes("b"),
   },
   location: parseButton(loc),
 });
 
-const parseUnlaned = (f: "f" | null, loc: PT.TouchLoc) => ({
+const parseUnlaned = (
+  decorators: Array<PT.Decorator>,
+  loc: PT.TouchLoc,
+): { decorators: { hanabi: boolean }; location: AST.Sensor } => ({
   decorators: {
-    hanabi: f === "f",
+    hanabi: decorators.includes("f"),
   },
   location: parseSensor(loc),
 });
@@ -266,14 +286,14 @@ const parseSlides = (
     A.filter((x) => x.type === "slide"),
     A.map((slide) => ({
       time,
-      paths: slide.slidePaths.map(parseSlidePath(slide.loc, bpm)),
+      paths: slide.slidePaths.map(parseSlidePath(slide.location, bpm)),
     })),
   );
 
 const parseSlidePath =
   (head: PT.ButtonLoc, bpm: number) =>
   (slide: PT.SlideHead): AST.SlidePath => {
-    switch (slide.type) {
+    switch (slide.joinType) {
       case "constant":
         const { delay, length } = parseLenSlide(slide.len, bpm);
         return {
@@ -308,16 +328,16 @@ const parseVertices = (
   } else if (verts.length === 2) {
     return [parseButton(verts[0]), parseButton(verts[1])];
   } else {
-    throw new Error("Too many buttons in vertex list.");
+    throw new AbsynError("Too many buttons in vertex list.");
   }
 };
 
 const partialSegmentNoDuration = (
   head: PT.ButtonLoc,
-  second: PT.ConstantSegment,
+  second: PT.SlideSegment,
 ) => ({
   type: parseSlideType(second.slideType),
-  vertices: parseVertices([head, ...second.verts]),
+  vertices: parseVertices([head, ...second.tailVerts]),
 });
 
 /**
@@ -340,7 +360,7 @@ const generateSegmentsConstant = (
           duration,
         },
         ...generateSegmentsConstant(
-          tail.at(0).verts.at(-1),
+          tail.at(0).tailVerts.at(-1),
           tail.slice(1),
           duration / tail.length,
         ),
@@ -366,7 +386,7 @@ const generateSegmentsVariable = (
           duration: parseLenSlide(tail.at(0).len, bpm).length,
         },
         ...generateSegmentsVariable(
-          tail.at(0).verts.at(-1),
+          tail.at(0).tailVerts.at(-1),
           tail.slice(1),
           bpm,
         ),
