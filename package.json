@@ -1,6 +1,6 @@
 {
   "name": "simai-analyzer",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "A robust, tested and functional solution for parsing simai chart data",
   "scripts": {
     "test": "jest",
