@@ -163,17 +163,16 @@ export type SlideType =
   | "zShape"
   | "fan";
 
-export const noteDuration = (note: Note) =>
-  pipe(() => {
-    switch (note.type) {
-      case "tap":
-      case "touch":
-        return 0;
-      case "hold":
-      case "touchHold":
-        return note.duration;
-    }
-  });
+export const noteDuration = (note: Note) => {
+  switch (note.type) {
+    case "tap":
+    case "touch":
+      return 0;
+    case "hold":
+    case "touchHold":
+      return note.duration;
+  }
+};
 
 /**
  * Given a full slide path, computes the total duration of the longest
