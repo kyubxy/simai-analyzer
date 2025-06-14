@@ -84,8 +84,7 @@ export const deserializeSingle = (data: string): DeserializationResult<Chart> =>
     mapParse,
     partitionAndPreserveRights<ParseError, Cell>(() => ({ noteCol: [] })),
     ({ left, right }) => {
-      const a = genAbsyn(right);
-      const soaChart = pipe(a, E.map(link));
+      const soaChart = pipe(genAbsyn(right), E.map(link));
       return E.isRight(soaChart)
         ? {
             errors: left,
