@@ -28,11 +28,3 @@ export const partitionAndPreserveRights =
     return { left, right };
   };
 
-export const chainSeparatedLists =
-  <E, A, B>(f: (a: Array<A>) => S.Separated<Array<E>, Array<B>>) =>
-  (
-    separated: S.Separated<Array<E>, Array<A>>,
-  ): S.Separated<Array<E>, Array<B>> => {
-    const result = f(separated.right);
-    return { left: [...separated.left, ...result.left], right: result.right };
-  };

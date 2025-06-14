@@ -357,12 +357,10 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
               type: "tap",
             },
           ],
-          slides: undefined,
           time: 0,
         },
         {
           contents: [],
-          slides: undefined,
           time: 0.5,
         },
         {
@@ -379,7 +377,6 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
             },
           ],
           time: 1,
-          slides: undefined,
         },
       ],
       timing: [

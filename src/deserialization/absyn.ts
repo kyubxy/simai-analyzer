@@ -3,7 +3,7 @@ import * as AST from "../chart";
 import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
 import * as E from "fp-ts/Either";
-import { pipe } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/function";
 
 export class AbsynError extends Error {
   constructor(message?: string) {
@@ -87,13 +87,27 @@ type State = {
   div: PT.LenDef;
 };
 
-export type ParsedCell = {
+export type AbsynCell = {
   noteCollection: O.Option<AST.NoteCollection>;
   timing: O.Option<AST.TimingMarker>;
   slides: Array<AST.Slide>;
 };
 
-export type AoSChart = Array<ParsedCell>;
+export type AoSChart = Array<AbsynCell>;
+
+const tagSlides = (cells: Array<PT.Cell>): Array<PT.Cell> =>
+  pipe(
+    cells,
+    A.map(({ noteCol, ...rest }) => ({
+      noteCol: pipe(
+        noteCol ?? [],
+        A.mapWithIndex<PT.Note, PT.Note>((i, note) =>
+          note.type === "slide" ? { ...note, _id: i } : note,
+        ),
+      ),
+      ...rest,
+    })),
+  );
 
 /**
  * Generates the chart as a AoS
@@ -108,6 +122,7 @@ export const genAbsyn = (
     return E.right(
       pipe(
         cells,
+        tagSlides,
         A.reduce<PT.Cell, [AoSChart, State]>(
           [[], { time: 0, bpm: null, div: { type: "div", val: 4 } }], // assume a starting value of {4}
           ([pCellAcc, currentState], cell) => {
@@ -119,14 +134,12 @@ export const genAbsyn = (
       ),
     );
   } catch (error) {
-    return E.left(error);
+    if (error instanceof AbsynError) return E.left(error);
+    else throw error;
   }
 };
 
-const parseCell = (
-  cell: PT.Cell,
-  state: State,
-): [ParsedCell, State] => {
+const parseCell = (cell: PT.Cell, state: State): [AbsynCell, State] => {
   const internalState = {
     bpm: cell.bpm ?? state.bpm,
     div: cell.div ?? state.div,
@@ -199,11 +212,12 @@ const deferResolve: AST.NoteCollection = {
   time: 0,
 };
 
-const parseSlideTap = (slide: PT.Slide): AST.Tap => ({
+const parseSlideTap = (slide: PT.Slide): AST._Tap => ({
   ...parseLaned(slide.decorators, slide.location),
   style: "star",
   type: "tap",
   parent: deferResolve,
+  _ptId: slide._id,
 });
 
 const parseTap = (tap: PT.Tap): AST.Tap => ({
@@ -280,13 +294,14 @@ const parseSlides = (
   noteCol: Array<PT.Note>,
   time: number,
   bpm: number,
-): Array<AST.Slide> =>
+): Array<AST._Slide> =>
   pipe(
     noteCol,
     A.filter((x) => x.type === "slide"),
     A.map((slide) => ({
       time,
       paths: slide.slidePaths.map(parseSlidePath(slide.location, bpm)),
+      _ptId: slide._id,
     })),
   );
 

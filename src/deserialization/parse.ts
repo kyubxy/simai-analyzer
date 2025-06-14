@@ -31,6 +31,7 @@ export type Slide = {
   location: ButtonLoc;
   style: "" | "@" | "?" | "!";
   slidePaths: Array<SlideHead>;
+  _id?: number;
 };
 
 export type SlideHead =
@@ -164,7 +165,8 @@ export type ParseError = {
   cellId: number;
 };
 
-const preprocess = (chart: string) => chart.replace(/\s/g, "").split(",");
+const preprocess = (chart: string) =>
+  chart.replace(/\s/g, "").split(",").slice(0, -1);
 
 /**
  * Returns a list of eithers which resolve a cell represented as a parse tree
@@ -178,15 +180,18 @@ export const mapParse = (chart: string): Array<E.Either<ParseError, Cell>> =>
     preprocess,
     A.takeLeftWhile((rawCell) => rawCell !== "E"),
     A.mapWithIndex<string, E.Either<ParseError, Cell>>((cellId, cellImage) =>
-      E.tryCatch(
-        () => {
-          return parse(cellImage) as Cell;
-        },
-        (e) => ({
-          cellId,
-          image: cellImage,
-          errorMsg: JSON.stringify(e),
-        }),
+      pipe(
+        E.tryCatch(
+          () => parse(cellImage) as Cell,
+          (e) => ({
+            cellId,
+            image: cellImage,
+            errorMsg: JSON.stringify(e),
+          }),
+        ),
+        E.map((result) =>
+          Object.keys(result).length === 0 ? { noteCol: [] } : result,
+        ),
       ),
     ),
   );

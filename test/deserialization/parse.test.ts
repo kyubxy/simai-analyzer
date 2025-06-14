@@ -16,6 +16,19 @@ describe("mapParse", () => {
     }
   });
 
+  it("parses nothing", () => {
+    const chart = ",,,";
+    const actual = mapParse(chart);
+    for (const x of actual) {
+      expect(E.isRight(x)).toBeTruthy();
+      if (x._tag === "Right") {
+        const val = x.right;
+        console.log(x)
+        expect(val.noteCol).toMatchObject([])
+      }
+    }
+  })
+
   it("parses with one error", () => {
     const chart = "BROKEN,(2),3,4-5[6:7],(8)7,E";
     const [head, ...tail] = mapParse(chart);

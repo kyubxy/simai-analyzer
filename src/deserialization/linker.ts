@@ -1,8 +1,8 @@
-import { identity, pipe } from "fp-ts/function";
+import { pipe } from "fp-ts/function";
 import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
-import { Chart, NoteCollection, Slide, TimingMarker } from "../chart";
-import { AoSChart, ParsedCell } from "./absyn";
+import { Chart, NoteCollection, Slide, TimingMarker, Tap, _Tap, _Slide } from "../chart";
+import { AoSChart, AbsynCell } from "./absyn";
 
 // TODO: experiment whether passing array directly still works.
 // spreading might be slowing things down unnecessarily
@@ -16,7 +16,7 @@ const concatOption = <A>(as: Array<A>, ma: O.Option<A>): Array<A> =>
     ),
   );
 
-// NOTE: this function uses side effects to maintain reference equivalence
+// NOTE: this function uses side effects internally to maintain reference equivalence
 
 /**
  * Converts the AoS to a SoA and links struct elements.
@@ -32,25 +32,25 @@ export const link = (cells: AoSChart): Chart => {
   for (const cell of cells) {
     if (O.isNone(cell.noteCollection)) continue;
     const noteCol = cell.noteCollection.value;
-    noteCol.contents.forEach((note) => (note.parent = noteCol));
-    noteCol.slides = cell.slides.length > 0 ? cell.slides : undefined;
-    noteCollections.push(noteCol);
-  }
+    noteCol.contents.forEach((note) => {
+      // assign parent note collection
+      note.parent = noteCol;
 
-  let concatSlides: Slide[] = [];
-  for (const cell of cells) {
-    const slides = cell.slides;
-    slides.forEach((slide) => {
-      const noteCol = cell.noteCollection;
-      if (O.isSome(noteCol)) slide.noteCol = noteCol.value;
+      // assign slide reference (assign both ways)
+      if (note.type === "tap" && (note as _Tap)._ptId !== undefined) {
+        const slide = cell.slides.find((sl) => (sl as _Slide)._ptId === (note as _Tap)._ptId);
+        note.slide = slide;
+        if (slide !== undefined)
+          slide.tap = note as Tap;
+      }
     });
-    concatSlides = [...concatSlides, ...slides]
+    noteCollections.push(noteCol);
   }
 
   // Use pipe for slides and timing as before
   return {
     noteCollections,
-    slides: concatSlides,
+    slides: cells.flatMap(({ slides }) => slides),
     timing: pipe(
       cells,
       A.reduce([] as TimingMarker[], (acc, cell) =>
@@ -59,126 +59,3 @@ export const link = (cells: AoSChart): Chart => {
     ),
   };
 };
-
-/*
-
-
-  const noteCollections = [];
-  for (const cell of cells) {
-    if (O.isNone(cell.noteCollection)) continue;
-    const noteCol = cell.noteCollection.value;
-    noteCol.contents.forEach((note) => (note.parent = noteCol));
-    noteCol.slides = cell.slides.length > 0 ? cell.slides : undefined;
-    cell.slides.forEach((slide) => (slide.noteCol = noteCol));
-    noteCollections.push(cell.noteCollection);
-  }
-  return {
-    slides: pipe(
-      cells,
-      A.flatMap(({ slides }) => slides),
-    ),
-    timing: pipe(
-      cells,
-      A.reduce([], (acc, { timing }) =>
-        pipe(
-          timing,
-          O.fold(
-            () => acc,
-            (x) => [...acc, x],
-          ),
-        ),
-      ),
-    ),
-    noteCollections,
-  };
-};
-
-
-  pipe(
-    cells,
-    A.reduce<ParsedCell, Chart>(
-      {
-        noteCollections: [],
-        slides: [],
-        timing: [],
-      },
-      (acc, cell) => ({
-        noteCollections: pipe(
-          cell.noteCollection,
-          O.map((noteCol) => {
-            // references require side effects
-            noteCol.contents.forEach((note) => (note.parent = noteCol));
-            noteCol.slides = cell.slides.length > 0 ? cell.slides : undefined;
-            return noteCol;
-          }),
-          O.fold(
-            () => acc.noteCollections,
-            (newNoteCol) => [...acc.noteCollections, newNoteCol],
-          ),
-        ),
-        slides: [
-          ...acc.slides,
-          ...pipe(
-            cell.slides,
-            A.map((slide) => ({
-              ...slide,
-              noteCol: pipe(
-                cell.noteCollection,
-                O.fold(() => undefined, identity),
-              ),
-            })),
-          ),
-        ],
-        timing: concatOption(acc.timing, cell.timing),
-      }),
-    ),
-  );
-
-
-
-
-  pipe(
-    cells,
-    A.reduce<ParsedCell, Chart>(
-      {
-        noteCollections: [],
-        slides: [],
-        timing: [],
-      },
-      (acc, cell) => ({
-        noteCollections: pipe(
-          cell.noteCollection,
-          O.map((noteCol) => {
-            const contents = noteCol.contents.map((note) => ({
-              ...note,
-              parent: noteCol,
-            }));
-            return {
-              ...noteCol,
-              contents,
-              slides: cell.slides.length > 0 ? cell.slides : undefined,
-            };
-          }),
-          O.fold(
-            () => acc.noteCollections,
-            (newNoteCol) => [...acc.noteCollections, newNoteCol],
-          ),
-        ),
-        slides: [
-          ...acc.slides,
-          ...pipe(
-            cell.slides,
-            A.map((slide) => ({
-              ...slide,
-              noteCol: pipe(
-                cell.noteCollection,
-                O.fold(() => undefined, identity),
-              ),
-            })),
-          ),
-        ],
-        timing: concatOption(acc.timing, cell.timing),
-      }),
-    ),
-  );
-  */

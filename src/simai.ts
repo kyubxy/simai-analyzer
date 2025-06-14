@@ -1,11 +1,11 @@
 import * as A from "fp-ts/Array";
 import * as O from "fp-ts/Option";
 import * as E from "fp-ts/Either";
-import { pipe } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/function";
 import { Chart, MaidataFile } from "./chart";
 import { AbsynError, genAbsyn } from "./deserialization/absyn";
 import { link } from "./deserialization/linker";
-import { partitionAndPreserveRights } from "./fp/Array";
+import { partitionAndPreserveRights } from "./fp";
 import { parseMaidata } from "./deserialization/maidataParser";
 import { Cell, mapParse, ParseError } from "./deserialization/parse";
 
@@ -84,7 +84,7 @@ export const deserializeSingle = (data: string): DeserializationResult<Chart> =>
     mapParse,
     partitionAndPreserveRights<ParseError, Cell>(() => ({ noteCol: [] })),
     ({ left, right }) => {
-      const a = genAbsyn(right)
+      const a = genAbsyn(right);
       const soaChart = pipe(a, E.map(link));
       return E.isRight(soaChart)
         ? {
@@ -116,33 +116,41 @@ export const deserializeMaidata = (
       chart: Chart;
     };
   };
+  
   const raw = parseMaidata(maidata);
   const title = raw["title"];
   const artist = raw["artist"];
   const author = raw["des"];
   const offset = parseFloat(raw["first"]);
+
+  // Merge the defaultLevels with any customLevels provided (or an empty array if undefined),
+  // then filter and transform them into a structured intermediate format (`Inter`),
+  // and finally reduce them into a tuple of [errors[], levelsMap]
+
   // we need to lift the errors out of the deserializeSingle call
   const [errors, levels] = pipe(
     [...defaultLevels, ...(customLevels ?? [])],
+    // for each metadata entry, attempt to look up and deserialise its chart
     A.filterMap<LevelMetadata, Inter>(({ difficulty, chartKey, levelKey }) => {
       const c = raw[chartKey];
       if (c === undefined) return O.none;
-      const { errors, chart: chart } = deserializeSingle(c);
+      const { errors, chart: chart } = deserializeSingle(c); // try to parse the chart
       return chart === null
         ? O.none
         : O.some({
             errors,
-            payload: { difficulty, chart, levelNumber: raw[levelKey] },
+            payload: { difficulty, chart, levelNumber: raw[levelKey] }, // the string representation of the level number
           });
     }),
+    // separate out deserialization errors and successfully parsed charts
     A.reduce<
       Inter,
       [
-        Array<DeserializationError>,
-        Array<[string, { chart: Chart; level: string }]>,
+        Array<DeserializationError>, // accumulated errors
+        Array<[string, { chart: Chart; level: string }]>, // accumulated [difficulty, chart] pairs
       ]
     >([[], []], ([aErrors, aLevels], curr) => [
-      [...aErrors, ...curr.errors],
+      [...aErrors, ...curr.errors], // accumulate errors
       [
         ...aLevels,
         [
@@ -151,8 +159,10 @@ export const deserializeMaidata = (
         ],
       ],
     ]),
+    // convert the chart pairs into a record keyed by difficulty
     ([errors, levels]) => [errors, Object.fromEntries(levels)],
   );
+
   const data: MaidataFile = {
     raw,
     title,
@@ -161,6 +171,7 @@ export const deserializeMaidata = (
     offset,
     levels,
   };
+
   return {
     errors,
     chart: data,

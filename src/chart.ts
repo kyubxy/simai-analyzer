@@ -51,7 +51,6 @@ export type TimingMarker = {
  */
 export type NoteCollection = {
   contents: Array<Note>;
-  slides?: Array<Slide>;
   time: number;
 };
 
@@ -101,6 +100,11 @@ export type LanedNote = NoteCollectionChild & {
 export type Tap = LanedNote & {
   type: "tap";
   style: TapStyle;
+  slide?: Slide;
+};
+
+export type _Tap = Tap & {
+  _ptId?: number;
 };
 
 /**
@@ -118,8 +122,12 @@ export type TapStyle = "circle" | "star" | "starStationary";
 export type Slide = {
   time: number;
   paths: Array<SlidePath>;
-  noteCol?: NoteCollection;
+  tap?: Tap;
 };
+
+export type _Slide = Slide & {
+  _ptId?: number;
+}
 
 export type SlidePath = {
   delay: number;
