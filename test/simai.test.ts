@@ -9,6 +9,7 @@ import {
   deserializeSingle,
   difficulties,
 } from "../src/simai";
+import { luciaRemas } from "./chartData/lucia";
 
 describe("deserialization", () => {
   it.each([
@@ -62,5 +63,12 @@ E4/8,,7/B3,7,B2,6,E2,6,E4,5,B3,5,B2/5,5,6/E2,6,
     expect(chart!.offset).toBe(2.54);
     expect(chart!.author).toBe("kyubey");
     expect(chart!.levels[difficulties.master].level).toBe("14");
+  });
+
+  test("stuff", () => {
+    const data = luciaRemas;
+    const result = deserializeSingle(data).chart;
+    console.log("ya", result);
+    expect(true).toBe(true);
   });
 });

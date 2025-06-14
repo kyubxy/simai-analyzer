@@ -17,7 +17,9 @@ cell = (c:(bpm:bpm {return {bpm}} / div:div {return {div}} / noteCol:noteCol {re
 
 bpm = '(' bpm:number ')' {return bpm}
 
-div = '{' div:number '}' {return div}
+div = '{' val:divVal '}' {return val}
+
+divVal = val:number {return {type: "div", val}} / '#' val:number {return{type: "sec", val}}
 
 // TODO: support for `
 noteCol = n:note ns:(('/'/'`') ns:note {return ns})* {return [n, ...ns]}
