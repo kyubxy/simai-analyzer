@@ -23,7 +23,7 @@ npm i simai-analyzer
 
 > [!WARNING]
 > This project is still relatively new and is not fully done yet.
-> Deserialisation should work fine, but serialisation is still not implemented.
+> Deserialisation might work, but serialisation is still not implemented.
 
 ## Usage
 
