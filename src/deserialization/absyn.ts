@@ -117,6 +117,7 @@ const tagSlides = (cells: Array<PT.Cell>): Array<PT.Cell> =>
  */
 export const genAbsyn = (
   cells: Array<PT.Cell>,
+  offset: number,
 ): E.Either<AbsynError, AoSChart> => {
   try {
     return E.right(
@@ -124,13 +125,22 @@ export const genAbsyn = (
         cells,
         tagSlides,
         A.reduce<PT.Cell, [AoSChart, State]>(
-          [[], { time: 0, bpm: null, div: { type: "div", val: 4 } }], // assume a starting value of {4}
+          [[], { time: offset, bpm: null, div: { type: "div", val: 4 } }], // assume a starting value of {4}
           ([pCellAcc, currentState], cell) => {
             const [parsedCell, parsedState] = parseCell(cell, currentState);
             return [[...pCellAcc, parsedCell], parsedState];
           },
         ),
         ([chart, _]) => chart,
+        A.filter(({ noteCollection }) =>
+          pipe(
+            noteCollection,
+            O.fold(
+              () => true,
+              (noteCol) => noteCol.contents.length > 0,
+            ),
+          ),
+        ),
       ),
     );
   } catch (error) {

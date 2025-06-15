@@ -78,13 +78,16 @@ export type DeserializationResult<T> = {
  * @param data
  * @returns
  */
-export const deserializeSingle = (data: string): DeserializationResult<Chart> =>
+export const deserializeSingle = (
+  data: string,
+  offset: number,
+): DeserializationResult<Chart> =>
   pipe(
     data,
     mapParse,
     partitionAndPreserveRights<ParseError, Cell>(() => ({ noteCol: [] })),
     ({ left, right }) => {
-      const soaChart = pipe(genAbsyn(right), E.map(link));
+      const soaChart = pipe(genAbsyn(right, offset), E.map(link));
       return E.isRight(soaChart)
         ? {
             errors: left,
@@ -115,7 +118,7 @@ export const deserializeMaidata = (
       chart: Chart;
     };
   };
-  
+
   const raw = parseMaidata(maidata);
   const title = raw["title"];
   const artist = raw["artist"];
@@ -133,7 +136,7 @@ export const deserializeMaidata = (
     A.filterMap<LevelMetadata, Inter>(({ difficulty, chartKey, levelKey }) => {
       const c = raw[chartKey];
       if (c === undefined) return O.none;
-      const { errors, chart: chart } = deserializeSingle(c); // try to parse the chart
+      const { errors, chart: chart } = deserializeSingle(c, offset); // try to parse the chart
       return chart === null
         ? O.none
         : O.some({

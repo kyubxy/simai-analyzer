@@ -127,7 +127,7 @@ export type Slide = {
 
 export type _Slide = Slide & {
   _ptId?: number;
-}
+};
 
 export type SlidePath = {
   delay: number;
@@ -182,6 +182,18 @@ export const noteDuration = (note: Note) => {
   }
 };
 
+export type TapType = "star" | "starDouble" | "tap";
+
+export const tapType = (tap: Tap): TapType => {
+  return tap.style === "circle"
+    ? "tap"
+    : tap.slide.paths.length === 1
+      ? "star"
+      : "starDouble";
+};
+
+export const isStar = (tap: Tap) => tapType(tap) !== "tap";
+
 /**
  * Given a full slide path, computes the total duration of the longest
  * slide path. The longest duration is the sum of that path's initial delay
@@ -190,8 +202,10 @@ export const noteDuration = (note: Note) => {
  * @param slide The slide to process
  * @returns The length in seconds of the longest path in the slide.
  */
-// TODO: test this
-export const slideVisibleDuration = (slide: Slide): number =>
+export const slideVisibleDuration = (
+  slide: Slide,
+  sumWithDelay?: boolean,
+): number =>
   pipe(
     slide.paths,
     A.reduce<SlidePath, number>(0, (maxPathDuration, path) =>
@@ -201,7 +215,8 @@ export const slideVisibleDuration = (slide: Slide): number =>
           (maxSegmentDuration, segment) =>
             Math.max(maxSegmentDuration, segment.duration),
           0,
-        ) + path.delay,
+        ) +
+          path.delay * Number(sumWithDelay ?? true),
       ),
     ),
   );
@@ -218,3 +233,5 @@ export const maxHoldDuration = (noteCol: NoteCollection) =>
     A.map((n) => (n as Hold | TouchHold).duration),
     A.reduce(0, (acc, curr) => Math.max(acc, curr)),
   );
+
+export const isEach = (note: Note): boolean => note.parent.contents.length > 1;
