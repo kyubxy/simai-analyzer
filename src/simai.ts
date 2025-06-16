@@ -123,7 +123,7 @@ export const deserializeMaidata = (
   const title = raw["title"];
   const artist = raw["artist"];
   const author = raw["des"];
-  const offset = parseFloat(raw["first"]);
+  const offset = parseFloat(raw["first"] ?? "0");
 
   // Merge the defaultLevels with any customLevels provided (or an empty array if undefined),
   // then filter and transform them into a structured intermediate format (`Inter`),
