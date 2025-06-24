@@ -182,6 +182,8 @@ export const noteDuration = (note: Note) => {
   }
 };
 
+export const noteTime = (note: Note) => note.parent.time;
+
 export type TapType = "star" | "starDouble" | "tap";
 
 export const tapType = (tap: Tap): TapType => {
