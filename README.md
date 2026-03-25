@@ -72,7 +72,7 @@ there is a great deal of testing being done on core internal functions.
 
 The emphasis is on correctness and code readability, not performance. 
 
-> [!INFO]
+> [!NOTE]
 > Currently only serialization and deserializtion of charts are supported. I might add more complex analysis tools (simai-**analyzer**) at a later date. Stay tuned!
 
 **What Simai Analyzer currently is not**
