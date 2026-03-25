@@ -8,6 +8,10 @@ import { link } from "./deserialization/linker";
 import { partitionAndPreserveRights } from "./fp";
 import { parseMaidata } from "./deserialization/maidataParser";
 import { Cell, mapParse, ParseError } from "./deserialization/parse";
+import { unlink } from "./serialization/unlinker";
+import { lower, LowerError } from "./serialization/lower";
+import { emit, EmitError } from "./serialization/emit";
+import { emitMaidata } from "./serialization/maidataEmitter";
 
 export type LevelMetadata = {
   difficulty: string;
@@ -180,7 +184,38 @@ export const deserializeMaidata = (
   };
 };
 
-// TODO:
-export const serialize = (chart: MaidataFile): string => {
-  throw new Error("Not implemented yet.");
+export type SerializationError = LowerError | EmitError | { message: string };
+
+export type SerializationResult<T> = {
+  errors: Array<SerializationError>;
+  text: T | null;
+};
+
+/**
+ * Serialize a single difficulty chart back to a simai chart string.
+ * @param chart
+ * @param offset
+ * @returns
+ */
+export const serializeSingle = (
+  chart: Chart,
+  offset: number,
+): SerializationResult<string> => {
+  const cells = pipe(chart, unlink, (aos) => lower(aos, offset));
+  return E.isRight(cells)
+    ? { errors: [], text: emit(cells.right) }
+    : { errors: [cells.left], text: null };
+};
+
+/**
+ * Serialize an entire maidata file back to a maidata.txt string.
+ * @param file
+ * @param levels
+ * @returns
+ */
+export const serializeMaidata = (
+  file: MaidataFile,
+  levels?: Array<LevelMetadata>,
+): SerializationResult<string> => {
+  return { errors: [], text: emitMaidata(file, levels) };
 };

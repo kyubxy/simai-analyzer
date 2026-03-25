@@ -20,10 +20,6 @@
 npm i simai-analyzer
 ```
 
-> [!WARNING]
-> This project is still relatively new and is not fully done yet.
-> Deserialisation might work, but serialisation is still not implemented.
-
 ## Usage
 
 **Deserialize the entire `maidata.txt`:**
@@ -52,47 +48,54 @@ doStuffWith(master.noteCollections)
 
 See [the parse type UML diagram](https://github.com/kyubxy/simai-analyzer/wiki/Parse-type-UML-diagram) for more details on the deserialisation output.
 
+**Serialise a single difficulty:**
+
+```ts
+import { serializeSingle } from "simai-analyzer/simai";
+
+const { errors, text } = serializeSingle(chart, offset);
+```
+
+**Serialise an entire `maidata.txt`:**
+
+```ts
+import { serializeMaidata } from "simai-analyzer/simai";
+
+const { errors, text } = serializeMaidata(file);
+```
+
 ## About
 
-Introducing a reliable and correct simai deserializer for
-Javascript/Typescript.
+Introducing a reliable and correct simai deserializer for Javascript/Typescript.
+The parsing algorithm is resilient so even charts with errors can still be partially loaded, and
+there is a great deal of testing being done on core internal functions.
 
-**What's so good about this one?**
+The emphasis is on correctness and code readability, not performance. 
 
-This parser has a few good things going for it which should make the lives of
-developers and players easier.
-
-- A fault tolerant system. Malformed charts still partially come
-through without just giving up and throwing errors.
-- Entirely functional, typed and well-tested code
-- Robust and clearly defined syntax parsing with Peggy.js
-- A stronger emphasis on correctness over performance
-- Sane API structure
-- Active support
+> [!INFO]
+> Currently only serialization and deserializtion of charts are supported. I might add more complex analysis tools (simai-**analyzer**) at a later date. Stay tuned!
 
 **What Simai Analyzer currently is not**
 
 - Fully AstroDX compatible (but should work in 99% of use-cases)
 - Fully MajData/3Simai compatible
-- An absolute definitive on what simai semantics should be
-(but it will make clear any some assumptions where there may be ambiguities)
 
 ## Building and Setup
 
-Simai analyzer is really small and easy to set up locally.
-
-**Restore dependencies**
+1. Restore dependencies
 
 ```txt
 npm install
 ```
 
-**Generate the parser**
+2. Generate the parser
 
 ```txt
 npm run genparser
 ```
 
+3. Profit
+ 
 At the moment, the easiest way to interact directly with the parser
 is through unit tests. Simply add a test under `test/` and use
 
@@ -113,9 +116,3 @@ of doing tests.
 ## Contributing
 
 Feel free to raise issues or submit PRs in any format.
-
-If you're going to raise an issue, describe the bug in as much detail as you can.
-
-Try to follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) style of writing commit messages.
-
-Write code that is functional, makes ample use of the type system and includes tests. Those are all the whole point of this project.
