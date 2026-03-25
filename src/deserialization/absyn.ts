@@ -117,7 +117,7 @@ const tagSlides = (cells: Array<PT.Cell>): Array<PT.Cell> =>
  */
 export const genAbsyn = (
   cells: Array<PT.Cell>,
-  offset: number,
+  offset: number = 0,
 ): E.Either<AbsynError, AoSChart> => {
   try {
     return E.right(
@@ -132,14 +132,8 @@ export const genAbsyn = (
           },
         ),
         ([chart, _]) => chart,
-        A.filter(({ noteCollection }) =>
-          pipe(
-            noteCollection,
-            O.fold(
-              () => true,
-              (noteCol) => noteCol.contents.length > 0,
-            ),
-          ),
+        A.filter(({ noteCollection, timing, slides }) =>
+          O.isSome(noteCollection) || O.isSome(timing) || slides.length > 0,
         ),
       ),
     );
