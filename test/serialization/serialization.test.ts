@@ -247,6 +247,42 @@ describe("serialisation roundtrip", () => {
     expect(noteCols[1].time).toBeCloseTo(6);
   });
 
+  it("preserves timing precision when notes are spaced at a fine division with a large gap", () => {
+    // At BPM 120, {32} step = 0.0625s. Two notes 33 steps apart = 2.0625s gap.
+    // 2.0625s is not a multiple of {1} (2s), {2} (1s), etc. — only {32} fits evenly.
+    // Bug: computeDiv(2.0625, 120) ≈ 0.97 → clamps to {1}, numSteps=1 → note lands at 2s.
+    const bpm = 120;
+    const div = 32;
+    const steps = 33;
+    const stepSize = 240 / (bpm * div); // 0.0625s
+    const expectedTime = steps * stepSize; // 2.0625s
+
+    const chart: Chart = {
+      noteCollections: [
+        {
+          contents: [{ type: "tap", location: 0, style: "circle", decorators: { break: false, ex: false } }],
+          slides: [],
+          time: 0,
+        },
+        {
+          contents: [{ type: "tap", location: 1, style: "circle", decorators: { break: false, ex: false } }],
+          slides: [],
+          time: expectedTime,
+        },
+      ],
+      timing: [{ time: 0, bpm }],
+    };
+
+    const { errors, text } = serializeSingle(chart, 0);
+    expect(errors).toHaveLength(0);
+    expect(text).not.toBeNull();
+
+    const { chart: chart2 } = deserializeSingle(text!, 0);
+    const noteCols = chart2!.noteCollections.filter((nc) => nc.contents.length > 0);
+    expect(noteCols).toHaveLength(2);
+    expect(noteCols[1].time).toBeCloseTo(expectedTime);
+  });
+
   it("does not throw when serialising fragrance master", () => {
     const { chart } = deserializeSingle(fragrance, 0);
     expect(chart).not.toBeNull();

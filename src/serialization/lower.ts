@@ -28,12 +28,33 @@ const getCellTime = (cell: AbsynCell): number | null => {
   return null;
 };
 
-// getTimeDelta for div type: (60/bpm) * (4/div.val)
-// Solve for div.val: 240 / (bpm * timeDelta), clamped to a minimum of 1.
-const computeDiv = (timeDelta: number, bpm: number): PT.LenDef => ({
-  type: "div",
-  val: Math.max(1, Math.round(240 / (bpm * timeDelta))),
-});
+// Standard simai division values, ordered coarsest to finest.
+const STANDARD_DIVS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96];
+
+/**
+ * Finds the coarsest standard division and the integer step count that
+ * together exactly represent timeDelta at the given BPM.
+ *
+ * timeDelta = numSteps * (240 / (bpm * divVal))
+ * → numSteps = divVal * bpm * timeDelta / 240
+ *
+ * Iterates from coarsest to finest and returns the first (divVal, numSteps)
+ * where numSteps rounds to a positive integer within a small tolerance.
+ * Falls back to {1} with a rounded step count for non-standard timings.
+ */
+const computeDivAndSteps = (
+  timeDelta: number,
+  bpm: number,
+): { div: PT.LenDef; numSteps: number } => {
+  const x = (bpm * timeDelta) / 240; // = numSteps / divVal
+  for (const d of STANDARD_DIVS) {
+    const n = Math.round(d * x);
+    if (n >= 1 && Math.abs(n - d * x) < 0.01) {
+      return { div: { type: "div", val: d }, numSteps: n };
+    }
+  }
+  return { div: { type: "div", val: 1 }, numSteps: Math.max(1, Math.round(x)) };
+};
 
 const lenDefEquals = (a: PT.LenDef, b: PT.LenDef): boolean =>
   a.type === b.type && a.val === b.val;
@@ -171,12 +192,17 @@ export const lower = (
       const bpm = newBpm ?? state.bpm;
       if (bpm === null) throw new LowerError("BPM was null");
 
-      // Compute div from the step size to the next cell
+      // Compute the best (div, numSteps) pair for the gap to the next cell.
       let newDiv: PT.LenDef | null = null;
+      let numSteps = 1;
       if (nextAbsCell !== undefined) {
         const nextTime = getCellTime(nextAbsCell);
         if (nextTime !== null && nextTime > cellTime) {
-          const computed = computeDiv(nextTime - cellTime, bpm);
+          const { div: computed, numSteps: n } = computeDivAndSteps(
+            nextTime - cellTime,
+            bpm,
+          );
+          numSteps = n;
           if (!lenDefEquals(computed, state.div)) newDiv = computed;
         }
       }
@@ -194,18 +220,10 @@ export const lower = (
         noteCol,
       });
 
-      // Insert filler empty cells when the gap to the next cell spans multiple
-      // steps at the effective division (e.g. notes far apart with no intermediate
-      // AoSChart entries).
-      if (nextAbsCell !== undefined) {
-        const nextTime = getCellTime(nextAbsCell);
-        if (nextTime !== null && nextTime > cellTime) {
-          const stepSize = 240 / (bpm * effectiveDiv.val);
-          const numSteps = Math.round((nextTime - cellTime) / stepSize);
-          for (let j = 1; j < numSteps; j++) {
-            cells.push({ noteCol: [] });
-          }
-        }
+      // Insert filler empty cells when the gap spans multiple steps
+      // (e.g. notes far apart with no intermediate AoSChart entries).
+      for (let j = 1; j < numSteps; j++) {
+        cells.push({ noteCol: [] });
       }
 
       state = { time: cellTime, bpm, div: effectiveDiv };
