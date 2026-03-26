@@ -6,6 +6,7 @@ import {
 } from "../../src/simai";
 import { Chart } from "../../src/chart";
 import { emitCell } from "../../src/serialization/emit";
+import { canonicalize } from "../../src/serialization/canonicalize";
 import { fragrance } from "../chartData/fragranceMaster";
 import { lowercaseLifetimeMaidata } from "../chartData/lowercaseLifetimeMaidata";
 
@@ -157,9 +158,99 @@ describe("emitCell", () => {
   });
 });
 
+// ── canonicalize unit tests ───────────────────────────────────────────────────
+
+describe("canonicalize", () => {
+  const div = (val: number) => ({ type: "div" as const, val });
+  const empty = () => ({ noteCol: [] });
+  const emptyDiv = (val: number) => ({ div: div(val), noteCol: [] });
+  const note = () => ({ noteCol: [{ type: "tap" as const, location: { button: 1 }, decorators: [] }] });
+
+  it("collapses 4 empty cells at {4} into 1 empty cell at {1}", () => {
+    const input = [emptyDiv(4), empty(), empty(), empty()];
+    const output = canonicalize(input);
+    expect(output).toHaveLength(1);
+    expect(output[0].div).toEqual(div(1));
+  });
+
+  it("collapses 2 empty cells at {8} into 1 empty cell at {4}", () => {
+    const input = [emptyDiv(8), empty()];
+    const output = canonicalize(input);
+    expect(output).toHaveLength(1);
+    expect(output[0].div).toEqual(div(4));
+  });
+
+  it("collapses 8 empty cells at {4} into 2 empty cells at {1}", () => {
+    const input = [emptyDiv(4), empty(), empty(), empty(), empty(), empty(), empty(), empty()];
+    const output = canonicalize(input);
+    expect(output).toHaveLength(2);
+    expect(output[0].div).toEqual(div(1));
+    expect(output[1].div).toBeUndefined();
+  });
+
+  it("leaves 3 empty cells at {4} unchanged (gcd=1, no simplification)", () => {
+    const input = [emptyDiv(4), empty(), empty()];
+    const output = canonicalize(input);
+    expect(output).toHaveLength(3);
+  });
+
+  it("does not merge across a note", () => {
+    const input = [emptyDiv(4), empty(), note(), empty(), empty()];
+    const output = canonicalize(input);
+    // First run: 2 empty at {4}, gcd=2 → 1 empty at {2}
+    // Note: untouched
+    // Second run: 2 empty at {2} (inherited div), gcd=2 → 1 empty at {1}
+    expect(output).toHaveLength(3);
+  });
+
+  it("does not merge across a bpm change", () => {
+    const input = [emptyDiv(4), { noteCol: [], bpm: 180 }, empty(), empty()];
+    const output = canonicalize(input);
+    // The bpm cell breaks the run; only the first cell stands alone
+    expect(output[1].bpm).toBe(180);
+    expect(output).toHaveLength(3); // [emptyDiv4], [bpm180 empty], [empty+empty collapsed]
+  });
+
+  it("does not merge across a div change mid-run", () => {
+    const input = [emptyDiv(4), empty(), emptyDiv(8), empty()];
+    // First run: 2 at {4} → gcd=2 → 1 at {2}
+    // Second run: 2 at {8} → gcd=2 → 1 at {4}
+    const output = canonicalize(input);
+    expect(output).toHaveLength(2);
+    expect(output[0].div).toEqual(div(2));
+    expect(output[1].div).toEqual(div(4));
+  });
+
+  it("preserves non-empty cells unchanged", () => {
+    const input = [{ bpm: 120, div: div(4), noteCol: [] }, note(), empty(), empty(), empty(), empty()];
+    const output = canonicalize(input);
+    expect(output[0].bpm).toBe(120);
+    expect(output[1]).toEqual(note());
+    // 4 empty at {4} after note → {1}
+    expect(output[2].div).toEqual(div(1));
+    expect(output).toHaveLength(3);
+  });
+});
+
 // ── roundtrip tests ───────────────────────────────────────────────────────────
 
 describe("serialisation roundtrip", () => {
+  it("serialises empty-cell runs in canonical form", () => {
+    // (120){4},,,,2, has 4 empty cells at {4} = 1 measure. Canonical: {1},2,
+    const input = "(120){4},,,,1,";
+    const { chart } = deserializeSingle(input, 0);
+    const { errors, text } = serializeSingle(chart!, 0);
+    expect(errors).toHaveLength(0);
+    // Should not contain the verbose 4-comma form; the run must be collapsed
+    const commaRuns = text!.replace(/[^,]/g, "").match(/,{2,}/g) ?? [];
+    expect(commaRuns.every((run) => run.length < 4)).toBe(true);
+    // Timing must be preserved
+    const { chart: chart2 } = deserializeSingle(text!, 0);
+    expect(chart2!.noteCollections[0].time).toBeCloseTo(
+      chart!.noteCollections[0].time,
+    );
+  });
+
   it("roundtrips a simple chart without losing note count", () => {
     const input = "(180){8}1,2,3,4,";
     const { chart } = deserializeSingle(input, 0);

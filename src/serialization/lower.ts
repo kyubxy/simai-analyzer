@@ -181,9 +181,19 @@ export const lower = (
       div: { type: "div", val: 4 },
     };
 
-    for (let i = 0; i < chart.length; i++) {
-      const absCell = chart[i];
-      const nextAbsCell = chart[i + 1];
+    // Discard cells that carry no information: empty noteCollections with no
+    // timing marker. These arise from empty commas in the source; their only
+    // role was to advance the time counter, but that information is already
+    // encoded in the `time` field of surrounding cells.
+    const meaningful = chart.filter((cell) => {
+      if (O.isSome(cell.timing)) return true;
+      const nc = O.toNullable(cell.noteCollection);
+      return nc !== null && nc.contents.length > 0;
+    });
+
+    for (let i = 0; i < meaningful.length; i++) {
+      const absCell = meaningful[i];
+      const nextAbsCell = meaningful[i + 1];
 
       const cellTime = getCellTime(absCell);
       if (cellTime === null) continue;
