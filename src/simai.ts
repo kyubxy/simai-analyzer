@@ -11,7 +11,6 @@ import { Cell, mapParse, ParseError } from "./deserialization/parse";
 import { unlink } from "./serialization/unlinker";
 import { lower, LowerError } from "./serialization/lower";
 import { emit, EmitError } from "./serialization/emit";
-import { canonicalize } from "./serialization/canonicalize";
 import { emitMaidata } from "./serialization/maidataEmitter";
 
 export type LevelMetadata = {
@@ -204,7 +203,7 @@ export const serializeSingle = (
 ): SerializationResult<string> => {
   const cells = pipe(chart, unlink, (aos) => lower(aos, offset));
   return E.isRight(cells)
-    ? { errors: [], text: emit(canonicalize(cells.right)) }
+    ? { errors: [], text: emit(cells.right) }
     : { errors: [cells.left], text: null };
 };
 

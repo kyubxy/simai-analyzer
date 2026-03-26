@@ -192,6 +192,7 @@ export const lower = (
     });
 
     for (let i = 0; i < meaningful.length; i++) {
+      const isFirst = i === 0;
       const absCell = meaningful[i];
       const nextAbsCell = meaningful[i + 1];
 
@@ -226,7 +227,7 @@ export const lower = (
 
       cells.push({
         ...(newBpm !== null ? { bpm: newBpm } : {}),
-        ...(newDiv !== null ? { div: newDiv } : {}),
+        ...(isFirst || newDiv !== null ? { div: effectiveDiv } : {}),
         noteCol,
       });
 

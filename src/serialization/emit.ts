@@ -193,4 +193,4 @@ export const emitCell = (cell: PT.Cell): string =>
  * @returns The simai chart string
  */
 export const emit = (cells: Array<PT.Cell>): string =>
-  cells.map(emitCell).join(",") + ",E,";
+  cells.map(emitCell).join(",") + ",E";
