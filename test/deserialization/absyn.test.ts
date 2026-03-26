@@ -2,10 +2,6 @@ import { genAbsyn } from "../../src/deserialization/absyn";
 import { link } from "../../src/deserialization/linker";
 import { Cell } from "../../src/deserialization/parse";
 
-const deferredParent = {
-  contents: [],
-  time: 0,
-};
 
 const tests: Array<[string, string, Array<Cell>, any]> = [
   // Taps and decorators
@@ -352,7 +348,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
                 break: false,
               },
               location: 2,
-              parent: deferredParent,
+
               style: "circle",
               type: "tap",
             },
@@ -371,7 +367,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
                 break: false,
               },
               location: 2,
-              parent: deferredParent,
+
               style: "circle",
               type: "tap",
             },
@@ -1486,13 +1482,6 @@ describe("absyn", () => {
       return;
     }
     const actual = link(soa.right);
-
-    // we test parent correctness in linking
-    for (const { contents } of actual.noteCollections) {
-      for (const c of contents) {
-        c.parent = deferredParent
-      }
-    }
 
     expect(actual).toMatchObject(expected);
   });

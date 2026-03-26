@@ -59,14 +59,10 @@ export type NoteCollection = {
  */
 export type Note = Tap | Hold | Touch | TouchHold;
 
-type NoteCollectionChild = {
-  parent: NoteCollection;
-};
-
 /**
  * Touches and touch holds. Slides are excluded from this category.
  */
-export type UnlanedNote = NoteCollectionChild & {
+export type UnlanedNote = {
   location: Sensor;
   decorators: TouchDecorator;
 };
@@ -89,7 +85,7 @@ export type TouchHold = UnlanedNote & {
 /**
  * Anything that is fixed to a lane.
  */
-export type LanedNote = NoteCollectionChild & {
+export type LanedNote = {
   decorators: NoteDecorator;
   location: Button;
 };
@@ -100,7 +96,6 @@ export type LanedNote = NoteCollectionChild & {
 export type Tap = LanedNote & {
   type: "tap";
   style: TapStyle;
-  slide?: Slide;
 };
 
 export type _Tap = Tap & {
@@ -122,7 +117,6 @@ export type TapStyle = "circle" | "star" | "starStationary";
 export type Slide = {
   time: number;
   paths: Array<SlidePath>;
-  tap?: Tap;
 };
 
 export type _Slide = Slide & {
@@ -182,19 +176,63 @@ export const noteDuration = (note: Note) => {
   }
 };
 
-export const noteTime = (note: Note) => note.parent.time;
+/**
+ * Returns the {@link NoteCollection} that contains the given note, or
+ * `undefined` if the note is not found in the chart.
+ */
+export const parentOf = (
+  note: Note,
+  chart: Chart,
+): NoteCollection | undefined =>
+  chart.noteCollections.find((nc) => nc.contents.includes(note));
+
+/**
+ * Returns the {@link Slide} triggered by the given star tap, or `undefined`
+ * if no matching slide exists in the chart.
+ */
+export const slideOf = (tap: _Tap, chart: Chart): Slide | undefined => {
+  const time = parentOf(tap, chart)?.time;
+  if (time === undefined) return undefined;
+  return chart.slides.find(
+    // cast is unsafe: _ptId exists at runtime on all slides but is not modelled
+    // on the public Slide type. resolves once slides are associated with taps at
+    // parse time, eliminating _ptId, _Slide, and _Tap entirely.
+    (sl) => (sl as _Slide)._ptId === tap._ptId && sl.time === time,
+  );
+};
+
+/**
+ * Returns the star {@link Tap} that triggers the given slide, or `undefined`
+ * if no matching tap exists in the chart.
+ */
+export const tapOf = (slide: _Slide, chart: Chart): Tap | undefined =>
+  chart.noteCollections
+    .find((nc) => nc.time === slide.time)
+    ?.contents.find(
+      (n): n is Tap => n.type === "tap" && (n as _Tap)._ptId === slide._ptId,
+    );
+
+/**
+ * Returns the timestamp in seconds at which the note fires, or `undefined`
+ * if the note is not found in the chart.
+ */
+export const noteTime = (note: Note, chart: Chart) =>
+  parentOf(note, chart)?.time;
 
 export type TapType = "star" | "starDouble" | "tap";
 
-export const tapType = (tap: Tap): TapType => {
-  return tap.style === "circle"
-    ? "tap"
-    : tap.slide.paths.length === 1
-      ? "star"
-      : "starDouble";
+/**
+ * Returns whether a tap is a plain circle, a single star, or a double star,
+ * based on the number of slide paths it triggers.
+ */
+export const tapType = (tap: Tap, chart: Chart): TapType => {
+  if (tap.style === "circle") return "tap";
+  const slide = slideOf(tap as _Tap, chart);
+  return slide?.paths.length === 1 ? "star" : "starDouble";
 };
 
-export const isStar = (tap: Tap) => tapType(tap) !== "tap";
+/** Returns `true` if the tap is any variety of star. */
+export const isStar = (tap: Tap, chart: Chart) => tapType(tap, chart) !== "tap";
 
 /**
  * Given a full slide path, computes the total duration of the longest
@@ -236,4 +274,9 @@ export const maxHoldDuration = (noteCol: NoteCollection) =>
     A.reduce(0, (acc, curr) => Math.max(acc, curr)),
   );
 
-export const isEach = (note: Note): boolean => note.parent.contents.length > 1;
+/**
+ * Returns `true` if the note fires simultaneously with at least one other note
+ * in the same {@link NoteCollection}.
+ */
+export const isEach = (note: Note, chart: Chart): boolean =>
+  (parentOf(note, chart)?.contents.length ?? 0) > 1;

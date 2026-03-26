@@ -210,17 +210,10 @@ const parseNote =
     }
   };
 
-// Temporary parent value
-const deferResolve: AST.NoteCollection = {
-  contents: [],
-  time: 0,
-};
-
 const parseSlideTap = (slide: PT.Slide): AST._Tap => ({
   ...parseLaned(slide.decorators, slide.location),
   style: "star",
   type: "tap",
-  parent: deferResolve,
   _ptId: slide._id,
 });
 
@@ -228,20 +221,17 @@ const parseTap = (tap: PT.Tap): AST.Tap => ({
   ...parseLaned(tap.decorators, tap.location),
   style: "circle", // TODO: support for forced stars
   type: "tap",
-  parent: deferResolve,
 });
 
 const parseHold = (hold: PT.Hold, bpm: number): AST.Hold => ({
   ...parseLaned(hold.decorators, hold.location),
   duration: parseLenHold(hold.length, bpm),
   type: "hold",
-  parent: deferResolve,
 });
 
 const parseTouch = (touch: PT.Touch): AST.Touch => ({
   ...parseUnlaned(touch.decorators, touch.location),
   type: "touch",
-  parent: deferResolve,
 });
 
 const parseTouchHold = (
@@ -251,7 +241,6 @@ const parseTouchHold = (
   ...parseUnlaned(touchHold.decorators, touchHold.location),
   duration: parseLenHold(touchHold.length, bpm),
   type: "touchHold",
-  parent: deferResolve,
 });
 
 const parseLaned = (

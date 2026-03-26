@@ -91,9 +91,7 @@ const lowerSlidePath = (path: AST.SlidePath): PT.SlideHead => ({
 });
 
 const lowerSlideTap = (tap: AST._Tap, slides: Array<AST.Slide>): PT.Slide => {
-  const slide =
-    (tap as AST.Tap).slide ??
-    slides.find((sl) => (sl as AST._Slide)._ptId === tap._ptId);
+  const slide = slides.find((sl) => (sl as AST._Slide)._ptId === tap._ptId);
   if (slide === undefined) throw new LowerError("Star tap has no linked slide");
   return {
     type: "slide",

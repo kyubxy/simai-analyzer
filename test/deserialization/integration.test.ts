@@ -1,19 +1,14 @@
-import { Slide } from "../../src/chart";
+import { _Tap, _Slide, parentOf, slideOf, tapOf } from "../../src/chart";
 import { deserializeSingle } from "../../src/simai";
 
-const deferredParent = {
-  contents: [],
-  time: 0,
-};
-
 describe("linking", () => {
-  it("Links notecollections to their parents", () => {
+  it("Links notecollections to their notes", () => {
     const input = "(120)4/5, 6,";
     const { chart } = deserializeSingle(input);
-    const ncParent = chart?.noteCollections[0];
-    const ncChild = ncParent?.contents[0];
-    const actualChild2 = ncChild?.parent.contents[1];
-    const expectedChild2 = ncParent?.contents[1];
+    const ncParent = chart?.noteCollections[0]!;
+    const ncChild = ncParent.contents[0];
+    const actualChild2 = parentOf(ncChild, chart!)?.contents[1];
+    const expectedChild2 = ncParent.contents[1];
     expect(actualChild2).toBe(expectedChild2);
   });
 
@@ -26,15 +21,15 @@ describe("linking", () => {
 
     const slidetap1 = nc1.contents[0];
     if (slidetap1.type !== "tap") throw new Error();
-    expect(slidetap1.slide?.paths[0].slideSegments[0].type).toBe("straight");
+    expect(slideOf(slidetap1 as _Tap, chart!)?.paths[0].slideSegments[0].type).toBe("straight");
 
     const slidetap2 = nc2.contents[0];
     if (slidetap2.type !== "tap") throw new Error();
-    expect(slidetap2.slide?.paths[0].slideSegments[0].type).toBe("fan");
+    expect(slideOf(slidetap2 as _Tap, chart!)?.paths[0].slideSegments[0].type).toBe("fan");
 
     // test that slides link to taps
     const [sl1, sl2] = chart?.slides!;
-    expect(sl1.tap?.location).toBe(3);
-    expect(sl2.tap?.location).toBe(5);
+    expect(tapOf(sl1 as _Slide, chart!)?.location).toBe(3);
+    expect(tapOf(sl2 as _Slide, chart!)?.location).toBe(5);
   });
 });
