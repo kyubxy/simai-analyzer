@@ -31,7 +31,6 @@ export const link = (cells: AoSChart): Chart => {
 
   return {
     noteCollections,
-    slides: cells.flatMap(({ slides }) => slides),
     timing: pipe(
       cells,
       A.reduce([] as TimingMarker[], (acc, cell) =>

@@ -33,7 +33,6 @@ export type Level = {
  */
 export type Chart = {
   noteCollections: Array<NoteCollection>;
-  slides: Array<Slide>;
   timing: Array<TimingMarker>;
 };
 
@@ -46,11 +45,12 @@ export type TimingMarker = {
 };
 
 /**
- * The first "layer" of a chart. `NoteCollection`s contain all notes (excluding slides)
+ * The first "layer" of a chart. `NoteCollection`s contain all notes and slides
  * to hit the judgement line at a point in time.
  */
 export type NoteCollection = {
   contents: Array<Note>;
+  slides: Array<Slide>;
   time: number;
 };
 
@@ -115,7 +115,6 @@ export type Hold = LanedNote & {
 export type TapStyle = "circle" | "star" | "starStationary";
 
 export type Slide = {
-  time: number;
   paths: Array<SlidePath>;
 };
 
@@ -190,16 +189,13 @@ export const parentOf = (
  * Returns the {@link Slide} triggered by the given star tap, or `undefined`
  * if no matching slide exists in the chart.
  */
-export const slideOf = (tap: _Tap, chart: Chart): Slide | undefined => {
-  const time = parentOf(tap, chart)?.time;
-  if (time === undefined) return undefined;
-  return chart.slides.find(
-    // cast is unsafe: _ptId exists at runtime on all slides but is not modelled
-    // on the public Slide type. resolves once slides are associated with taps at
-    // parse time, eliminating _ptId, _Slide, and _Tap entirely.
-    (sl) => (sl as _Slide)._ptId === tap._ptId && sl.time === time,
+export const slideOf = (tap: _Tap, chart: Chart): Slide | undefined =>
+  // cast is unsafe: _ptId exists at runtime on all slides but is not modelled
+  // on the public Slide type. resolves once slides are associated with taps at
+  // parse time, eliminating _ptId, _Slide, and _Tap entirely.
+  parentOf(tap, chart)?.slides.find(
+    (sl) => (sl as _Slide)._ptId === tap._ptId,
   );
-};
 
 /**
  * Returns the star {@link Tap} that triggers the given slide, or `undefined`
@@ -207,7 +203,7 @@ export const slideOf = (tap: _Tap, chart: Chart): Slide | undefined => {
  */
 export const tapOf = (slide: _Slide, chart: Chart): Tap | undefined =>
   chart.noteCollections
-    .find((nc) => nc.time === slide.time)
+    .find((nc) => nc.slides.includes(slide))
     ?.contents.find(
       (n): n is Tap => n.type === "tap" && (n as _Tap)._ptId === slide._ptId,
     );

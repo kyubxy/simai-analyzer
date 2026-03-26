@@ -28,7 +28,8 @@ describe("linking", () => {
     expect(slideOf(slidetap2 as _Tap, chart!)?.paths[0].slideSegments[0].type).toBe("fan");
 
     // test that slides link to taps
-    const [sl1, sl2] = chart?.slides!;
+    const sl1 = chart!.noteCollections[0].slides[0];
+    const sl2 = chart!.noteCollections[1].slides[0];
     expect(tapOf(sl1 as _Slide, chart!)?.location).toBe(3);
     expect(tapOf(sl2 as _Slide, chart!)?.location).toBe(5);
   });

@@ -46,7 +46,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -89,7 +89,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -132,7 +132,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
 
@@ -204,7 +204,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -299,7 +299,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -381,7 +381,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -481,7 +481,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0.5,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -579,7 +579,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -680,7 +680,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -779,7 +779,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
 
@@ -832,7 +832,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -883,7 +883,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -930,7 +930,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
   [
@@ -977,7 +977,7 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
           time: 0,
         },
       ],
-      slides: [],
+
     },
   ],
 
@@ -1038,6 +1038,26 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
               style: "star",
             },
           ],
+          slides: [
+            {
+              paths: [
+                {
+                  delay: 0.5,
+                  slideSegments: [
+                    {
+                      type: "straight",
+                      duration: 0.5,
+                      vertices: [0, 4],
+                    },
+                  ],
+                  decorators: {
+                    ex: false,
+                    break: false,
+                  },
+                },
+              ],
+            },
+          ],
           time: 0,
         },
       ],
@@ -1045,27 +1065,6 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
         {
           bpm: 120,
           time: 0,
-        },
-      ],
-      slides: [
-        {
-          time: 0,
-          paths: [
-            {
-              delay: 0.5,
-              slideSegments: [
-                {
-                  type: "straight",
-                  duration: 0.5,
-                  vertices: [0, 4],
-                },
-              ],
-              decorators: {
-                ex: false,
-                break: false,
-              },
-            },
-          ],
         },
       ],
     },
@@ -1128,6 +1127,26 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
               style: "star",
             },
           ],
+          slides: [
+            {
+              paths: [
+                {
+                  delay: 0.5,
+                  slideSegments: [
+                    {
+                      type: "grandV",
+                      duration: 0.5,
+                      vertices: [0, 4, 5],
+                    },
+                  ],
+                  decorators: {
+                    ex: false,
+                    break: false,
+                  },
+                },
+              ],
+            },
+          ],
           time: 0,
         },
       ],
@@ -1135,27 +1154,6 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
         {
           bpm: 120,
           time: 0,
-        },
-      ],
-      slides: [
-        {
-          time: 0,
-          paths: [
-            {
-              delay: 0.5,
-              slideSegments: [
-                {
-                  type: "grandV",
-                  duration: 0.5,
-                  vertices: [0, 4, 5],
-                },
-              ],
-              decorators: {
-                ex: false,
-                break: false,
-              },
-            },
-          ],
         },
       ],
     },
@@ -1223,6 +1221,31 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
               style: "star",
             },
           ],
+          slides: [
+            {
+              paths: [
+                {
+                  delay: 0.5,
+                  slideSegments: [
+                    {
+                      type: "straight",
+                      duration: 0.5,
+                      vertices: [0, 3],
+                    },
+                    {
+                      type: "straight",
+                      duration: 0.25,
+                      vertices: [3, 0],
+                    },
+                  ],
+                  decorators: {
+                    ex: false,
+                    break: false,
+                  },
+                },
+              ],
+            },
+          ],
           time: 0,
         },
       ],
@@ -1230,32 +1253,6 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
         {
           bpm: 120,
           time: 0,
-        },
-      ],
-      slides: [
-        {
-          time: 0,
-          paths: [
-            {
-              delay: 0.5,
-              slideSegments: [
-                {
-                  type: "straight",
-                  duration: 0.5,
-                  vertices: [0, 3],
-                },
-                {
-                  type: "straight",
-                  duration: 0.25,
-                  vertices: [3, 0],
-                },
-              ],
-              decorators: {
-                ex: false,
-                break: false,
-              },
-            },
-          ],
         },
       ],
     },
@@ -1331,6 +1328,31 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
               style: "star",
             },
           ],
+          slides: [
+            {
+              paths: [
+                {
+                  delay: 0.5,
+                  slideSegments: [
+                    {
+                      type: "straight",
+                      duration: 0.5,
+                      vertices: [0, 3],
+                    },
+                    {
+                      type: "straight",
+                      duration: 0.5,
+                      vertices: [3, 0],
+                    },
+                  ],
+                  decorators: {
+                    ex: false,
+                    break: false,
+                  },
+                },
+              ],
+            },
+          ],
           time: 0,
         },
       ],
@@ -1338,32 +1360,6 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
         {
           bpm: 120,
           time: 0,
-        },
-      ],
-      slides: [
-        {
-          time: 0,
-          paths: [
-            {
-              delay: 0.5,
-              slideSegments: [
-                {
-                  type: "straight",
-                  duration: 0.5,
-                  vertices: [0, 3],
-                },
-                {
-                  type: "straight",
-                  duration: 0.5,
-                  vertices: [3, 0],
-                },
-              ],
-              decorators: {
-                ex: false,
-                break: false,
-              },
-            },
-          ],
         },
       ],
     },
@@ -1434,6 +1430,31 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
               style: "star",
             },
           ],
+          slides: [
+            {
+              paths: [
+                {
+                  delay: 0.5,
+                  slideSegments: [
+                    {
+                      type: "straight",
+                      duration: 0.5,
+                      vertices: [0, 3],
+                    },
+                    {
+                      type: "grandV",
+                      duration: 0.25,
+                      vertices: [3, 0, 1],
+                    },
+                  ],
+                  decorators: {
+                    ex: false,
+                    break: false,
+                  },
+                },
+              ],
+            },
+          ],
           time: 0,
         },
       ],
@@ -1441,32 +1462,6 @@ const tests: Array<[string, string, Array<Cell>, any]> = [
         {
           bpm: 120,
           time: 0,
-        },
-      ],
-      slides: [
-        {
-          time: 0,
-          paths: [
-            {
-              delay: 0.5,
-              slideSegments: [
-                {
-                  type: "straight",
-                  duration: 0.5,
-                  vertices: [0, 3],
-                },
-                {
-                  type: "grandV",
-                  duration: 0.25,
-                  vertices: [3, 0, 1],
-                },
-              ],
-              decorators: {
-                ex: false,
-                break: false,
-              },
-            },
-          ],
         },
       ],
     },

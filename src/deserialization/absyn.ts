@@ -90,7 +90,6 @@ type State = {
 export type AbsynCell = {
   noteCollection: O.Option<AST.NoteCollection>;
   timing: O.Option<AST.TimingMarker>;
-  slides: Array<AST.Slide>;
 };
 
 export type AoSChart = Array<AbsynCell>;
@@ -132,8 +131,8 @@ export const genAbsyn = (
           },
         ),
         ([chart, _]) => chart,
-        A.filter(({ noteCollection, timing, slides }) =>
-          O.isSome(noteCollection) || O.isSome(timing) || slides.length > 0,
+        A.filter(({ noteCollection, timing }) =>
+          O.isSome(noteCollection) || O.isSome(timing),
         ),
       ),
     );
@@ -168,14 +167,6 @@ const parseCell = (cell: PT.Cell, state: State): [AbsynCell, State] => {
           bpm,
         })),
       ),
-      slides: pipe(
-        O.fromNullable(cell.noteCol),
-        O.fold(
-          () => [],
-          (noteCol) =>
-            parseSlides(noteCol, internalState.time, internalState.bpm),
-        ),
-      ),
     },
     // State
     {
@@ -184,14 +175,6 @@ const parseCell = (cell: PT.Cell, state: State): [AbsynCell, State] => {
     },
   ];
 };
-
-const parseNoteCol = (
-  noteCol: Array<PT.Note>,
-  state: State,
-): AST.NoteCollection => ({
-  contents: noteCol.map(parseNote(state.bpm)),
-  time: state.time,
-});
 
 const parseNote =
   (bpm: number) =>
@@ -274,29 +257,6 @@ const parseLenHold = (dur: PT.LenHold, bpm: number): number => {
       return dur.delay;
   }
 };
-
-/**
- * Processes the entire note collection and only parses the slides.
- *
- * @param noteCol
- * @param time
- * @param bpm
- * @returns The AST Slide object.
- */
-const parseSlides = (
-  noteCol: Array<PT.Note>,
-  time: number,
-  bpm: number,
-): Array<AST._Slide> =>
-  pipe(
-    noteCol,
-    A.filter((x) => x.type === "slide"),
-    A.map((slide) => ({
-      time,
-      paths: slide.slidePaths.map(parseSlidePath(slide.location, bpm)),
-      _ptId: slide._id,
-    })),
-  );
 
 const parseSlidePath =
   (head: PT.ButtonLoc, bpm: number) =>
@@ -435,3 +395,25 @@ const parseLenSlide = (
       };
   }
 };
+
+const parseSlides = (
+  noteCol: Array<PT.Note>,
+  bpm: number,
+): Array<AST._Slide> =>
+  pipe(
+    noteCol,
+    A.filter((x) => x.type === "slide"),
+    A.map((slide) => ({
+      paths: slide.slidePaths.map(parseSlidePath(slide.location, bpm)),
+      _ptId: slide._id,
+    })),
+  );
+
+const parseNoteCol = (
+  noteCol: Array<PT.Note>,
+  state: State,
+): AST.NoteCollection => ({
+  contents: noteCol.map(parseNote(state.bpm)),
+  slides: parseSlides(noteCol, state.bpm),
+  time: state.time,
+});

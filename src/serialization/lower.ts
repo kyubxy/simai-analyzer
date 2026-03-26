@@ -25,7 +25,6 @@ type State = {
 const getCellTime = (cell: AbsynCell): number | null => {
   if (O.isSome(cell.noteCollection)) return cell.noteCollection.value.time;
   if (O.isSome(cell.timing)) return cell.timing.value.time;
-  if (cell.slides.length > 0) return cell.slides[0].time;
   return null;
 };
 
@@ -182,10 +181,9 @@ export const lower = (
         }
       }
 
-      const noteCol: PT.Note[] = O.isSome(absCell.noteCollection)
-        ? absCell.noteCollection.value.contents.map((n) =>
-            lowerNote(n, absCell.slides),
-          )
+      const nc = O.toNullable(absCell.noteCollection);
+      const noteCol: PT.Note[] = nc
+        ? nc.contents.map((n) => lowerNote(n, nc.slides))
         : [];
 
       cells.push({

@@ -188,8 +188,9 @@ describe("serialisation roundtrip", () => {
     const { text } = serializeSingle(chart!, 0);
     const { chart: chart2 } = deserializeSingle(text!, 0);
 
-    expect(chart2!.slides).toHaveLength(1);
-    expect(chart2!.slides[0].paths[0].slideSegments[0].type).toBe("straight");
+    const slides = chart2!.noteCollections.flatMap((nc) => nc.slides);
+    expect(slides).toHaveLength(1);
+    expect(slides[0].paths[0].slideSegments[0].type).toBe("straight");
   });
 
   it("roundtrips touch notes", () => {
