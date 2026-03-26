@@ -29,10 +29,10 @@ const getCellTime = (cell: AbsynCell): number | null => {
 };
 
 // getTimeDelta for div type: (60/bpm) * (4/div.val)
-// Solve for div.val: 240 / (bpm * timeDelta)
+// Solve for div.val: 240 / (bpm * timeDelta), clamped to a minimum of 1.
 const computeDiv = (timeDelta: number, bpm: number): PT.LenDef => ({
   type: "div",
-  val: Math.round(240 / (bpm * timeDelta)),
+  val: Math.max(1, Math.round(240 / (bpm * timeDelta))),
 });
 
 const lenDefEquals = (a: PT.LenDef, b: PT.LenDef): boolean =>
@@ -186,13 +186,29 @@ export const lower = (
         ? nc.contents.map((n) => lowerNote(n, nc.slides))
         : [];
 
+      const effectiveDiv = newDiv ?? state.div;
+
       cells.push({
         ...(newBpm !== null ? { bpm: newBpm } : {}),
         ...(newDiv !== null ? { div: newDiv } : {}),
         noteCol,
       });
 
-      state = { time: cellTime, bpm, div: newDiv ?? state.div };
+      // Insert filler empty cells when the gap to the next cell spans multiple
+      // steps at the effective division (e.g. notes far apart with no intermediate
+      // AoSChart entries).
+      if (nextAbsCell !== undefined) {
+        const nextTime = getCellTime(nextAbsCell);
+        if (nextTime !== null && nextTime > cellTime) {
+          const stepSize = 240 / (bpm * effectiveDiv.val);
+          const numSteps = Math.round((nextTime - cellTime) / stepSize);
+          for (let j = 1; j < numSteps; j++) {
+            cells.push({ noteCol: [] });
+          }
+        }
+      }
+
+      state = { time: cellTime, bpm, div: effectiveDiv };
     }
 
     return E.right(cells);

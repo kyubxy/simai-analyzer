@@ -4,6 +4,7 @@ import {
   serializeMaidata,
   serializeSingle,
 } from "../../src/simai";
+import { Chart } from "../../src/chart";
 import { emitCell } from "../../src/serialization/emit";
 import { fragrance } from "../chartData/fragranceMaster";
 import { lowercaseLifetimeMaidata } from "../chartData/lowercaseLifetimeMaidata";
@@ -211,6 +212,39 @@ describe("serialisation roundtrip", () => {
 
     expect(chart2!.noteCollections[0].contents).toHaveLength(2);
     expect(chart2!.noteCollections[1].contents).toHaveLength(2);
+  });
+
+  it("does not emit {0} when notes have no intermediate cells and are far apart", () => {
+    // Construct a Chart directly with two notes 6 seconds apart at BPM 120,
+    // with no intermediate empty noteCollections between them.
+    // At BPM 120: computeDiv(6, 120) = 240 / (120 * 6) = 0.33 → rounds to 0 (bug).
+    // Expected: clamp to {1} and insert 2 empty cells to cover the 3-measure gap.
+    const chart: Chart = {
+      noteCollections: [
+        {
+          contents: [{ type: "tap", location: 0, style: "circle", decorators: { break: false, ex: false } }],
+          slides: [],
+          time: 0,
+        },
+        {
+          contents: [{ type: "tap", location: 1, style: "circle", decorators: { break: false, ex: false } }],
+          slides: [],
+          time: 6,
+        },
+      ],
+      timing: [{ time: 0, bpm: 120 }],
+    };
+
+    const { errors, text } = serializeSingle(chart, 0);
+    expect(errors).toHaveLength(0);
+    expect(text).not.toBeNull();
+    expect(text).not.toContain("{0}");
+
+    const { chart: chart2 } = deserializeSingle(text!, 0);
+    const noteCols = chart2!.noteCollections.filter((nc) => nc.contents.length > 0);
+    expect(noteCols).toHaveLength(2);
+    expect(noteCols[0].time).toBeCloseTo(0);
+    expect(noteCols[1].time).toBeCloseTo(6);
   });
 
   it("does not throw when serialising fragrance master", () => {
