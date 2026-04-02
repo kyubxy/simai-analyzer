@@ -123,7 +123,7 @@ const lowerSlideTap = (tap: AST._Tap, slides: Array<AST.Slide>): PT.Slide => {
   };
 };
 
-const lowerNote = (note: AST.Note, slides: Array<AST.Slide>): PT.Note => {
+const lowerNote = (note: AST.Note, slides: Array<AST.Slide>, bpm: number): PT.Note => {
   switch (note.type) {
     case "tap": {
       const tap = note as AST.Tap;
@@ -135,26 +135,30 @@ const lowerNote = (note: AST.Note, slides: Array<AST.Slide>): PT.Note => {
         decorators: lowerDecorators(tap.decorators),
       };
     }
-    case "hold":
+    case "hold": {
+      const { div, numSteps } = computeDivAndSteps(note.duration, bpm);
       return {
         type: "hold",
         location: lowerButton(note.location),
         decorators: lowerDecorators(note.decorators),
-        length: { type: "delay", delay: note.duration },
+        length: { type: "ratio", ratio: { div: numSteps, num: div.val } },
       };
+    }
     case "touch":
       return {
         type: "touch",
         location: lowerSensor(note.location),
         decorators: lowerTouchDecorators(note.decorators),
       };
-    case "touchHold":
+    case "touchHold": {
+      const { div, numSteps } = computeDivAndSteps(note.duration, bpm);
       return {
         type: "touchHold",
         location: lowerSensor(note.location),
         decorators: lowerTouchDecorators(note.decorators),
-        length: { type: "delay", delay: note.duration },
+        length: { type: "ratio", ratio: { div: numSteps, num: div.val } },
       };
+    }
   }
 };
 
@@ -220,7 +224,7 @@ export const lower = (
 
       const nc = O.toNullable(absCell.noteCollection);
       const noteCol: PT.Note[] = nc
-        ? nc.contents.map((n) => lowerNote(n, nc.slides))
+        ? nc.contents.map((n) => lowerNote(n, nc.slides, bpm))
         : [];
 
       const effectiveDiv = newDiv ?? state.div;

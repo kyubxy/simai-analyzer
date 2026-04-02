@@ -149,6 +149,15 @@ export type Sensor = { index: Button; area: SensorRegion };
 
 export type SensorRegion = "A" | "B" | "C" | "D" | "E";
 
+export type Location = Button | Sensor;
+
+export const locationEquals = (a: Location, b: Location): boolean => {
+  if (typeof a === "number" && typeof b === "number") return a === b;
+  if (typeof a === "object" && typeof b === "object")
+    return a.area === b.area && a.index === b.index;
+  return false;
+};
+
 export type SlideType =
   | "straight"
   | "shortArc"
